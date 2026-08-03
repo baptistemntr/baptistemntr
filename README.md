@@ -35,7 +35,10 @@ Catalogue Industriel/
 │   │   └── server.py             Endpoints REST
 │   ├── secrets/             Clé privée Snowflake (non versionnée)
 │   └── .env.example
-├── frontend/                Interface commerciale + administration IMI
+├── frontend/                Interface commerciale (HTML/CSS/JS, sans build)
+│   ├── index.html
+│   ├── css/style.css
+│   └── js/{api,app}.js
 ├── tools/
 │   ├── inspect_excel.py     Cartographie du classeur existant
 │   └── discover_agile.py    Exploration du schéma Agile dans Snowflake
@@ -81,6 +84,15 @@ cd backend && PYTHONPATH=source python -m pytest tests/ -q
 Deux outils d'exploration restent disponibles : `tools/inspect_excel.py` (cartographie
 brute d'un onglet) et `tools/extract_controls.py` (libellés et groupes des contrôles).
 
+## Interface commerciale
+
+```bash
+cd frontend && python3 -m http.server 5500
+```
+
+Ouvrir http://localhost:5500 (le backend doit tourner sur le port 8010). Détails dans
+`frontend/README.md`.
+
 ## État d'avancement
 
 - [x] Cadrage fonctionnel documenté
@@ -90,9 +102,12 @@ brute d'un onglet) et `tools/extract_controls.py` (libellés et groupes des cont
 - [x] Analyse du classeur de référence → import des 19 gammes, 171 options, 306 articles
 - [x] Non-régression vérifiée : 306/306 lignes de la grille résolues à l'identique
 - [x] Formule de licence identifiée (somme pondérée de bits → hexadécimal)
+- [x] Interface commerciale (V1) : choix de gamme, configuration guidée, récapitulatif
+  permanent, infobulles, export par impression — vérifiée dans un navigateur
 - [ ] Correspondance bit → option à rejouer sur des licences réellement émises
 - [ ] Identification de l'attribut « référence commerciale » dans Agile
 - [ ] Arbitrage des 129 anomalies héritées avec l'IMI
-- [ ] Interface commerciale
+- [ ] Libellés de groupe commerciaux (certains affichent encore le `GroupName` technique
+  du classeur, ex. `CRT_options_panneau`) — à valider avec l'IMI, comme pour les options
 - [ ] Écran d'administration IMI
-- [ ] Export de la fiche de configuration client
+- [ ] Export à un autre format que l'impression navigateur

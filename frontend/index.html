@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catalogue Industriel</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header id="recap" class="recap">
+  <div class="recap-empty" id="recap-empty">Choisissez une gamme pour commencer une configuration.</div>
+  <div class="recap-content" id="recap-content" hidden>
+    <div class="recap-main">
+      <div class="recap-field">
+        <span class="recap-label">Désignation</span>
+        <span class="recap-value" id="recap-designation">—</span>
+      </div>
+      <div class="recap-field">
+        <span class="recap-label">Référence commerciale</span>
+        <span class="recap-value" id="recap-commercial-ref">—</span>
+      </div>
+      <div class="recap-field">
+        <span class="recap-label">Code article Agile</span>
+        <span class="recap-value" id="recap-item-number">—</span>
+      </div>
+      <div class="recap-field">
+        <span class="recap-label">Prix</span>
+        <span class="recap-value" id="recap-price">—</span>
+      </div>
+    </div>
+    <div class="recap-actions">
+      <button id="export-button" type="button">Exporter la fiche</button>
+    </div>
+    <div class="recap-messages" id="recap-messages"></div>
+    <div class="recap-license" id="recap-license" hidden></div>
+    <div class="recap-closest" id="recap-closest" hidden></div>
+  </div>
+</header>
+
+<nav id="family-picker" class="family-picker" aria-label="Choix de la gamme"></nav>
+
+<main id="configurator" class="configurator" hidden>
+  <h1 id="family-title"></h1>
+  <div id="groups"></div>
+</main>
+
+<div id="tooltip-layer" class="tooltip-layer" hidden>
+  <div class="tooltip-box">
+    <button type="button" class="tooltip-close" id="tooltip-close" aria-label="Fermer">×</button>
+    <div class="tooltip-text" id="tooltip-text"></div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
