@@ -1,5 +1,7 @@
-// Base de l'API catalogue. À adapter si le backend n'écoute pas sur ce port.
-const API_BASE = window.CATALOGUE_API_BASE || "http://localhost:8010";
+// Chemin relatif par défaut : le backend sert désormais ce dossier lui-même (voir
+// server.py), donc frontend et API partagent toujours la même origine. À ne renseigner
+// que si ce fichier est servi séparément du backend (ex. déploiement statique distinct).
+const API_BASE = window.CATALOGUE_API_BASE || "";
 
 // Un proxy réseau peut intercepter une requête sans jamais répondre : sans limite, ça
 // reste bloqué indéfiniment sans que l'utilisateur voie d'erreur.

@@ -43,7 +43,7 @@ async function init() {
     renderFamilyPicker();
   } catch (error) {
     el.recapEmpty.textContent =
-      `Impossible de contacter l'API (${API_BASE}) : ${error.message}. ` +
+      `Impossible de contacter l'API (${API_BASE || window.location.origin}) : ${error.message}. ` +
       "Vérifiez que le backend tourne et qu'il est joignable depuis ce navigateur.";
   }
 }
