@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Test réseau</title>
+</head>
+<body style="font-family: sans-serif; padding: 2rem;">
+
+<h1>Test réseau isolé</h1>
+<p>Ce fichier ne dépend d'aucun autre script du projet. Cliquez sur les boutons dans
+l'ordre et notez ce qui s'affiche sous chacun.</p>
+
+<h2>1. GET /api/health</h2>
+<button onclick="test1()">Lancer le test 1</button>
+<pre id="out1" style="background:#eee; padding:1rem; min-height:2rem;">(en attente)</pre>
+
+<h2>2. POST /api/configure</h2>
+<button onclick="test2()">Lancer le test 2</button>
+<pre id="out2" style="background:#eee; padding:1rem; min-height:2rem;">(en attente)</pre>
+
+<script>
+function log(id, text) {
+  const el = document.getElementById(id);
+  const time = new Date().toLocaleTimeString();
+  el.textContent += `\n[${time}] ${text}`;
+}
+
+function test1() {
+  const out = document.getElementById("out1");
+  out.textContent = "(en attente)";
+  log("out1", "Envoi de la requête...");
+  fetch("/api/health")
+    .then((r) => { log("out1", "Réponse reçue, statut " + r.status); return r.json(); })
+    .then((data) => log("out1", "Contenu : " + JSON.stringify(data)))
+    .catch((error) => log("out1", "ERREUR : " + error));
+}
+
+function test2() {
+  const out = document.getElementById("out2");
+  out.textContent = "(en attente)";
+  log("out2", "Envoi de la requête...");
+  fetch("/api/configure", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ family_code: "CRT", option_ids: [] }),
+  })
+    .then((r) => { log("out2", "Réponse reçue, statut " + r.status); return r.json(); })
+    .then((data) => log("out2", "Contenu : " + JSON.stringify(data)))
+    .catch((error) => log("out2", "ERREUR : " + error));
+}
+</script>
+</body>
+</html>
