@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -6,14 +9,16 @@ from catalogue import snowflake_client
 from catalogue.agile_sync import sync_articles
 from catalogue.database import SessionLocal, init_db
 from catalogue.models import Article, OptionGroup, ProductFamily
-from catalogue.resolver import ConfigurationError, build_license, check_rules, resolve_article
+from catalogue.resolver import build_license, check_rules, resolve_article
 from catalogue.schemas import (
     ConfigurationRequest,
     ConfigurationResult,
     FamilyDetailOut,
     FamilyOut,
+    SeedReport,
     SyncReport,
 )
+from catalogue.seed import load_catalogue
 
 app = FastAPI(title="Catalogue Industriel")
 
@@ -66,24 +71,42 @@ def configure(payload: ConfigurationRequest) -> ConfigurationResult:
             raise HTTPException(status_code=404, detail=f"Gamme inconnue : {payload.family_code}")
 
         selected = set(payload.option_ids)
+        # Une incompatibilité est une réponse, pas une panne : on la remonte telle quelle
+        # pour que l'écran puisse l'afficher à côté de la configuration.
         violations = check_rules(session, family.code, selected)
         if violations:
             raise HTTPException(status_code=422, detail=violations)
 
-        try:
-            result = resolve_article(session, family.code, selected)
-        except ConfigurationError as exc:
-            raise HTTPException(status_code=422, detail=[str(exc)]) from exc
+        result = resolve_article(session, family.code, selected)
 
         if family.has_license:
             result["license"] = build_license(session, family.code, selected) or None
 
-        # Un article non synchronisé récemment signale une grille à revoir côté IMI.
-        article = session.get(Article, result["item_number"])
-        result["warnings"] = (
-            [] if article and article.last_sync else ["Article absent du dernier import Agile."]
-        )
+        # Un article que la synchro n'a jamais vu signale une grille à revoir côté IMI.
+        if result["found"]:
+            article = session.get(Article, result["item_number"])
+            if not (article and article.last_sync):
+                result["warnings"].append("Article absent du dernier import Agile.")
         return ConfigurationResult(**result)
+    finally:
+        session.close()
+
+
+@app.post("/api/seed", response_model=SeedReport)
+def seed() -> SeedReport:
+    """Recharge la configuration depuis le classeur repris (`tools/import_workbook.py`).
+
+    Ne touche pas aux articles : ceux-ci n'appartiennent qu'à la synchro Agile.
+    """
+    path = Path(os.getenv("CATALOGUE_SEED", "../data/catalogue.json"))
+    if not path.exists():
+        raise HTTPException(
+            status_code=503,
+            detail=f"{path} absent — lancer d'abord tools/import_workbook.py.",
+        )
+    session: Session = SessionLocal()
+    try:
+        return SeedReport(**load_catalogue(session, path))
     finally:
         session.close()
 

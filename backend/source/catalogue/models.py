@@ -1,8 +1,15 @@
-"""Modèle de données du catalogue — voir docs/03-modele-de-donnees.md."""
+"""Modèle de données du catalogue — voir docs/03-modele-de-donnees.md.
+
+La structure suit celle du classeur, telle que la décrit `docs/04-regles-du-classeur.md` :
+une gamme porte des options, chaque article déclare exactement les options qu'il embarque,
+et la résolution compare la sélection à ces signatures.
+"""
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Table, Text, Column
+from sqlalchemy import (
+    Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Table, Text, UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from catalogue.database import Base
@@ -39,18 +46,24 @@ class ProductFamily(Base):
 
 
 class OptionGroup(Base):
-    """Une question posée au commercial : Format, Panneau, Stockage…"""
+    """Une question posée au commercial : Format, Panneau, Stockage…
+
+    `single` traduit un groupe de boutons radio (`GroupName` partagé), `boolean` une case
+    à cocher isolée. Un groupe exclusif peut n'avoir aucune réponse : le classeur propose
+    souvent un choix neutre « None », qui ne coche aucune colonne.
+    """
 
     __tablename__ = "option_group"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     family_code: Mapped[str] = mapped_column(ForeignKey("product_family.code"), nullable=False)
-    code: Mapped[str] = mapped_column(String(64), nullable=False)
+    code: Mapped[str] = mapped_column(String(128), nullable=False)
     label: Mapped[str] = mapped_column(String(255), nullable=False)
+    section: Mapped[str | None] = mapped_column(String(255))
     help_text: Mapped[str | None] = mapped_column(Text)
-    # single | multiple | boolean
+    # single | boolean
     selection: Mapped[str] = mapped_column(String(16), default="single")
-    required: Mapped[bool] = mapped_column(Boolean, default=True)
+    required: Mapped[bool] = mapped_column(Boolean, default=False)
     position: Mapped[int] = mapped_column(Integer, default=0)
 
     family: Mapped[ProductFamily] = relationship(back_populates="groups")
@@ -62,18 +75,36 @@ class OptionGroup(Base):
 class Option(Base):
     """Une réponse possible : C0, C1 IF, 4U…
 
-    `code` est le code métier historique, `label` ce que voit le commercial,
-    `technical_label` la définition technique affichée au survol.
+    `caption` est le libellé historique du classeur : c'est lui qui relie l'option à sa
+    colonne de grille, et il ne doit pas changer sans reprendre la grille. `label` est ce
+    que voit le commercial, `technical_label` la définition affichée au survol — elle vient
+    de la ligne « Commentaire » du classeur et répond au reproche de vocabulaire trop
+    technique.
+
+    `kind` distingue les options qui déterminent l'article (`grid`) de celles qui
+    n'agissent que sur la licence (`license`) ou n'ont qu'une portée commerciale
+    (`commercial`, ex. durée de licence, mode de livraison). Ces dernières ne participent
+    pas à la résolution mais doivent figurer au récapitulatif.
     """
 
     __tablename__ = "option"
+    __table_args__ = (UniqueConstraint("group_id", "caption"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     group_id: Mapped[int] = mapped_column(ForeignKey("option_group.id"), nullable=False)
-    code: Mapped[str] = mapped_column(String(64), nullable=False)
+    caption: Mapped[str] = mapped_column(String(255), nullable=False)
     label: Mapped[str] = mapped_column(String(255), nullable=False)
     technical_label: Mapped[str | None] = mapped_column(Text)
     help_text: Mapped[str | None] = mapped_column(Text)
+    # grid | license | commercial
+    kind: Mapped[str] = mapped_column(String(16), default="grid")
+    # Article Agile du composant apporté par l'option, et son prix — ligne 3 et 4 du
+    # classeur. Le prix sert à estimer une configuration sans article existant.
+    component_item_number: Mapped[str | None] = mapped_column(String(64))
+    unit_price: Mapped[float | None] = mapped_column(Float)
+    # Traçabilité vers le classeur, pour rejouer une comparaison en cas de doute.
+    source_column: Mapped[int | None] = mapped_column(Integer)
+    control_name: Mapped[str | None] = mapped_column(String(128))
     position: Mapped[int] = mapped_column(Integer, default=0)
 
     group: Mapped[OptionGroup] = relationship(back_populates="options")
@@ -93,7 +124,7 @@ class OptionRule(Base):
     message: Mapped[str | None] = mapped_column(Text)
 
 
-# Une croix de la grille peut porter sur plusieurs options simultanément.
+# Les options qu'un article embarque — l'ensemble forme sa signature.
 mapping_option = Table(
     "mapping_option",
     Base.metadata,
@@ -103,26 +134,65 @@ mapping_option = Table(
 
 
 class ArticleMapping(Base):
-    """Une croix de la grille : une combinaison d'options désigne un article Agile."""
+    """Une ligne de la grille : un article et la combinaison d'options qui le désigne.
+
+    `item_number` n'est volontairement pas une clé étrangère vers `article` : la grille
+    est tenue par l'IMI et peut citer un article absent du dernier import Agile. Cet écart
+    se signale, il ne doit pas empêcher l'enregistrement (cf. docs/02-architecture.md).
+
+    `designation`, `commercial_ref` et `standard_price` reprennent ce que le classeur
+    affiche aujourd'hui ; ils servent de repli tant qu'Agile n'a pas été synchronisé, et
+    de point de comparaison ensuite.
+    """
 
     __tablename__ = "article_mapping"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     family_code: Mapped[str] = mapped_column(ForeignKey("product_family.code"), nullable=False)
-    item_number: Mapped[str] = mapped_column(ForeignKey("article.item_number"), nullable=False)
-    override_label: Mapped[str | None] = mapped_column(Text)
+    item_number: Mapped[str | None] = mapped_column(String(64))
+    designation: Mapped[str | None] = mapped_column(Text)
+    commercial_ref: Mapped[str | None] = mapped_column(String(128))
+    standard_price: Mapped[float | None] = mapped_column(Float)
+    # Signature normalisée (captions triées) : la résolution est une égalité stricte.
+    signature: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    source_row: Mapped[int | None] = mapped_column(Integer)
 
     options: Mapped[list[Option]] = relationship(secondary=mapping_option)
-    article: Mapped[Article] = relationship()
+
+
+class LicenseWord(Base):
+    """Un mot de licence : DEM1 (par démodulateur), DEMLI (global), MODLI (modulateur).
+
+    Le classeur en produit plusieurs par gamme. Chacun est une somme pondérée de bits,
+    rendue en hexadécimal — c'est exactement ce que fait
+    `DEC2HEX(SUMIF(valeurs; VRAI; poids))` dans l'onglet « Licences <Gamme> ».
+    """
+
+    __tablename__ = "license_word"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    family_code: Mapped[str] = mapped_column(ForeignKey("product_family.code"), nullable=False)
+    code: Mapped[str] = mapped_column(String(32), nullable=False)
+    label: Mapped[str] = mapped_column(String(255), nullable=False)
+    position: Mapped[int] = mapped_column(Integer, default=0)
+
+    bits: Mapped[list["LicenseBit"]] = relationship(
+        back_populates="word", cascade="all, delete-orphan", order_by="LicenseBit.position"
+    )
 
 
 class LicenseBit(Base):
-    """Un bit de la clé de licence : vaut 1 si l'option associée est sélectionnée."""
+    """Un bit d'un mot de licence : ajoute son poids si l'option associée est retenue."""
 
     __tablename__ = "license_bit"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    family_code: Mapped[str] = mapped_column(ForeignKey("product_family.code"), nullable=False)
+    word_id: Mapped[int] = mapped_column(ForeignKey("license_word.id"), nullable=False)
     position: Mapped[int] = mapped_column(Integer, nullable=False)
-    option_id: Mapped[int | None] = mapped_column(ForeignKey("option.id"))
+    weight: Mapped[int] = mapped_column(Integer, nullable=False)
     label: Mapped[str] = mapped_column(String(255), nullable=False)
+    option_id: Mapped[int | None] = mapped_column(ForeignKey("option.id"))
+    # Cellule d'origine dans le classeur, pour pouvoir rejouer le calcul.
+    source_cell: Mapped[str | None] = mapped_column(String(64))
+
+    word: Mapped[LicenseWord] = relationship(back_populates="bits")
