@@ -1,0 +1,24 @@
+# Secrets — ne jamais versionner
+.env
+backend/.env
+backend/secrets/*
+!backend/secrets/.gitkeep
+*.p8
+*.pem
+
+# Bases locales
+*.db
+*.sqlite3
+
+# Sources de données de travail
+data/*
+!data/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+
+# macOS
+.DS_Store
