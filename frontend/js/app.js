@@ -65,7 +65,12 @@ async function selectFamily(code, button) {
   for (const child of el.familyPicker.children) child.classList.remove("active");
   button.classList.add("active");
 
-  state.currentFamily = await api.getFamily(code);
+  try {
+    state.currentFamily = await api.getFamily(code);
+  } catch (error) {
+    renderViolations(error.messages || [error.message]);
+    return;
+  }
   state.selectedIds = new Set();
 
   el.familyTitle.textContent = state.currentFamily.label;
