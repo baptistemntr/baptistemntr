@@ -18,6 +18,10 @@ l'ordre et notez ce qui s'affiche sous chacun.</p>
 <button onclick="test2()">Lancer le test 2</button>
 <pre id="out2" style="background:#eee; padding:1rem; min-height:2rem;">(en attente)</pre>
 
+<h2>3. POST /api/configure, avec AbortController (comme app.js)</h2>
+<button onclick="test3()">Lancer le test 3</button>
+<pre id="out3" style="background:#eee; padding:1rem; min-height:2rem;">(en attente)</pre>
+
 <script>
 function log(id, text) {
   const el = document.getElementById(id);
@@ -47,6 +51,27 @@ function test2() {
     .then((r) => { log("out2", "Réponse reçue, statut " + r.status); return r.json(); })
     .then((data) => log("out2", "Contenu : " + JSON.stringify(data)))
     .catch((error) => log("out2", "ERREUR : " + error));
+}
+
+function test3() {
+  const out = document.getElementById("out3");
+  out.textContent = "(en attente)";
+  log("out3", "Envoi de la requête (avec AbortController, timeout 8s)...");
+  const controller = new AbortController();
+  const timeout = setTimeout(() => {
+    log("out3", "Timeout de 8s atteint, annulation...");
+    controller.abort();
+  }, 8000);
+  fetch("/api/configure", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ family_code: "CRT", option_ids: [] }),
+    signal: controller.signal,
+  })
+    .then((r) => { log("out3", "Réponse reçue, statut " + r.status); return r.json(); })
+    .then((data) => log("out3", "Contenu : " + JSON.stringify(data)))
+    .catch((error) => log("out3", "ERREUR : " + error))
+    .finally(() => clearTimeout(timeout));
 }
 </script>
 </body>
