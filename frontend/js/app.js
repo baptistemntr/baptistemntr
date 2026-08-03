@@ -38,8 +38,14 @@ async function init() {
     if (event.target === el.tooltipLayer) hideTooltip();
   });
 
-  state.families = await api.listFamilies();
-  renderFamilyPicker();
+  try {
+    state.families = await api.listFamilies();
+    renderFamilyPicker();
+  } catch (error) {
+    el.recapEmpty.textContent =
+      `Impossible de contacter l'API (${API_BASE}) : ${error.message}. ` +
+      "Vérifiez que le backend tourne et qu'il est joignable depuis ce navigateur.";
+  }
 }
 
 function renderFamilyPicker() {
