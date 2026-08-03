@@ -3,6 +3,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
 from catalogue import snowflake_client
@@ -138,3 +139,12 @@ def get_article(item_number: str) -> dict:
         }
     finally:
         session.close()
+
+
+# Sert le frontend statique sur ce même port : évite tout aller-retour cross-origin en
+# développement, là où un proxy réseau peut perturber les requêtes entre deux ports
+# localhost distincts. Enregistré en dernier pour ne jamais masquer les routes /api/*
+# déclarées ci-dessus (Starlette essaie les routes dans leur ordre de déclaration).
+_frontend_dir = Path(__file__).resolve().parents[3] / "frontend"
+if _frontend_dir.exists():
+    app.mount("/", StaticFiles(directory=_frontend_dir, html=True), name="frontend")
