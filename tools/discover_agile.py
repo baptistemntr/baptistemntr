@@ -34,6 +34,20 @@ ITEM_LOOKUP_QUERY = """
     WHERE ITEM_NUMBER = '{item_number}'
 """
 
+# REV porte ses propres champs personnalisés en colonnes génériques (TEXT01..15,
+# LIST01..25...), un système distinct d'AGILE_FLEX. La référence commerciale peut être
+# rangée là plutôt que dans AGILE_FLEX — à vérifier en lisant les TEXTxx d'une révision.
+REV_LOOKUP_QUERY = """
+    SELECT r.ID, r.REV_NUMBER, r.LATEST_FLAG, r.DESCRIPTION,
+           r.TEXT01, r.TEXT02, r.TEXT03, r.TEXT04, r.TEXT05,
+           r.TEXT06, r.TEXT07, r.TEXT08, r.TEXT09, r.TEXT10,
+           r.TEXT11, r.TEXT12, r.TEXT13, r.TEXT14, r.TEXT15
+    FROM REV r
+    JOIN ITEM i ON i.ID = r.ITEM
+    WHERE i.ITEM_NUMBER = '{item_number}'
+    ORDER BY r.LATEST_FLAG DESC
+"""
+
 # af.ID seul n'est pas une clé fiable : sans le filtre de classe, la jointure ramène des
 # attributs d'objets sans rapport (BOM, étiquettes...) dont l'ID numérique coïncide avec
 # celui de l'article. Vérifié en conditions réelles sur S110647.
@@ -130,6 +144,8 @@ def main() -> None:
         if args.item_number:
             show(f"Fiche ITEM {args.item_number}",
                  fetch_all(conn, ITEM_LOOKUP_QUERY, item_number=args.item_number))
+            show(f"Révisions REV de {args.item_number} (colonnes TEXTxx)",
+                 fetch_all(conn, REV_LOOKUP_QUERY, item_number=args.item_number))
             show(
                 f"Attributs AGILE_FLEX de {args.item_number} (toutes révisions)",
                 fetch_all(conn, FLEX_FOR_ITEM_QUERY, item_number=args.item_number),
