@@ -56,6 +56,17 @@ FIND_TEXT_QUERY = """
     LIMIT 20
 """
 
+# Une correspondance partielle peut confondre la référence commerciale avec la désignation
+# complète qui la contient (« CRT-Q-EXT-4U » est un sous-texte de « CRT-Q-EXT-4U+P3U ») :
+# l'égalité stricte lève l'ambiguïté.
+FIND_EXACT_QUERY = """
+    SELECT af.ATTID, af.TEXT, i.ITEM_NUMBER
+    FROM AGILE_FLEX af
+    JOIN ITEM i ON i.ID = af.ID
+    WHERE af.TEXT = '{needle}'
+    LIMIT 20
+"""
+
 FLEX_ATTID_FREQUENCY_QUERY = """
     SELECT af.ATTID, COUNT(*) AS N, ANY_VALUE(af.TEXT) AS SAMPLE_TEXT
     FROM AGILE_FLEX af
@@ -94,6 +105,11 @@ def main() -> None:
              "pour trouver son ATTID, sans dépendre de la jointure sur un article précis",
     )
     parser.add_argument(
+        "--exact", action="store_true",
+        help="Avec --find-text : égalité stricte plutôt que sous-chaîne, pour ne pas "
+             "confondre une référence commerciale avec la désignation qui la contient",
+    )
+    parser.add_argument(
         "--table", default="ITEM", help="Table dont on veut les colonnes (défaut : ITEM)"
     )
     args = parser.parse_args()
@@ -104,10 +120,9 @@ def main() -> None:
     conn = connect()
     try:
         if args.find_text:
-            show(
-                f"AGILE_FLEX contenant « {args.find_text} »",
-                fetch_all(conn, FIND_TEXT_QUERY, needle=args.find_text),
-            )
+            query, verb = (FIND_EXACT_QUERY, "égal à") if args.exact else (FIND_TEXT_QUERY, "contenant")
+            show(f"AGILE_FLEX {verb} « {args.find_text} »",
+                 fetch_all(conn, query, needle=args.find_text))
             return
         show(f"Colonnes de {args.table}", fetch_all(conn, COLUMNS_QUERY, table=args.table))
         show("Exemples d'articles", fetch_all(conn, SAMPLE_ITEMS_QUERY))
