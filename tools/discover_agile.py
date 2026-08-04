@@ -34,15 +34,16 @@ ITEM_LOOKUP_QUERY = """
     WHERE ITEM_NUMBER = '{item_number}'
 """
 
-# Sans le filtre af.ID = af.ROW_ID : celui-ci est censé ne garder que la ligne courante,
-# mais s'il élimine tout pour un article donné, mieux vaut le voir que deviner pourquoi.
+# af.ID seul n'est pas une clé fiable : sans le filtre de classe, la jointure ramène des
+# attributs d'objets sans rapport (BOM, étiquettes...) dont l'ID numérique coïncide avec
+# celui de l'article. Vérifié en conditions réelles sur S110647.
 FLEX_FOR_ITEM_QUERY = """
     SELECT af.ATTID, af.ROW_ID, af.TEXT
     FROM AGILE_FLEX af
-    JOIN ITEM i ON i.ID = af.ID
+    JOIN ITEM i ON i.ID = af.ID AND i.CLASS = af.CLASS
     WHERE i.ITEM_NUMBER = '{item_number}'
       AND af.TEXT IS NOT NULL
-    ORDER BY af.ATTID
+    ORDER BY af.ID = af.ROW_ID DESC, af.ATTID
 """
 
 # Recherche directe d'un texte connu (ex. une référence commerciale déjà lue dans le
@@ -51,7 +52,7 @@ FLEX_FOR_ITEM_QUERY = """
 FIND_TEXT_QUERY = """
     SELECT af.ATTID, af.TEXT, i.ITEM_NUMBER
     FROM AGILE_FLEX af
-    JOIN ITEM i ON i.ID = af.ID
+    JOIN ITEM i ON i.ID = af.ID AND i.CLASS = af.CLASS
     WHERE af.TEXT ILIKE '%{needle}%'
     LIMIT 20
 """
@@ -62,7 +63,7 @@ FIND_TEXT_QUERY = """
 FIND_EXACT_QUERY = """
     SELECT af.ATTID, af.TEXT, i.ITEM_NUMBER
     FROM AGILE_FLEX af
-    JOIN ITEM i ON i.ID = af.ID
+    JOIN ITEM i ON i.ID = af.ID AND i.CLASS = af.CLASS
     WHERE af.TEXT = '{needle}'
     LIMIT 20
 """
