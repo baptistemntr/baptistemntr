@@ -123,8 +123,28 @@ propre ne justifiant pas un format générique. Trois points à noter :
   contrôle de l'écran CRT : elle reste figée à `FAUX` dans le classeur. Signalée via
   `unmapped_reason` plutôt que silencieusement ignorée.
 
-**SATCORE reste à faire** : mécanisme encore différent (constantes fixes mêlées à des
-options). Son panneau de licence reste vide plutôt que d'afficher une clé fausse.
+**SATCORE est peuplé** (`tools/import_licenses.py`, mots DEM/DEMLI, 37 bits). Contrairement
+à HDR, la plupart des bits ne dépendent **d'aucun contrôle** : `Licences SATCORE!E5:E33`
+et `O4:O11` les fixent en dur (`VRAI`/`FAUX` littéraux, pas des formules) — une base de
+fonctionnalités toujours incluse, indépendante de la configuration. Le modèle de licence a
+été étendu pour représenter ce cas (`LicenseBit.constant_value`, prioritaire sur les
+options quand renseigné ; `None` conserve le comportement HDR inchangé) plutôt que d'écrire
+un troisième mécanisme ad hoc comme pour CRT — SATCORE reste, comme HDR, une somme
+pondérée de bits en hexadécimal, seule la source de chaque bit diffère.
+
+- **3 bits sur 29** du mot DEM dépendent réellement d'une case de l'écran SATCORE :
+  `DVB-S2` (D16), `VCM (for DVB-S2)` (D20), `S band input` (D21).
+- **Le mot DEMLI est entièrement figé** : ses 8 bits vaudront toujours `0x2E`, quelle que
+  soit la configuration. `D1` à `D6` viennent de `Licences SATCORE!O18` (= `23` en dur,
+  sans formule ni contrôle) converti en binaire — si l'IMI change un jour cette constante
+  du classeur, `tools/import_licenses.py` devra être mis à jour en conséquence.
+- **4 bits référencent des constantes sans contrôle pour les activer** (`D23`, `D24`
+  → `Licences SATCORE!D48` « Combi » ; `D25`, `D26` → `D45`/`D46`, « 6D-TCM » et « DVB-S &
+  DSNG transport layer ») : même anomalie que `HDR_Advanced_DEAF`, signalée plutôt que
+  silencieusement comptée à 0.
+- **DEM2..DEM6** (recopie de DEM1 selon le nombre de démodulateurs installés) et le champ
+  numérique **Max SR** ne sont pas couverts, pour la même raison que les DEM2..DEM6 et
+  `SR_Max` d'HDR : quantité de matériel ou saisie libre, pas un choix parmi des options.
 
 > **Reste à confirmer avec l'IMI** : la correspondance bit → option d'HDR n'a pas encore
 > été rejouée sur une licence réellement émise pour une validation de bout en bout.

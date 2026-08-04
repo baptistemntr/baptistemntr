@@ -201,6 +201,11 @@ class LicenseBit(Base):
     que des choix discrets, pas ces quantités. Un tel bit n'a aucune option associée et
     porte `unmapped_reason` : il compte toujours pour 0 plutôt que de fausser la clé
     silencieusement.
+
+    D'autres (SATCORE surtout) ne dépendent d'aucune option ni d'aucun compteur : le
+    classeur les fixe en dur (`Licences SATCORE!E5`, littéralement `VRAI`, pas une formule)
+    — une base toujours incluse, indépendante de la configuration. `constant_value` porte
+    cette valeur figée ; quand il est renseigné, il prime sur `options` (ignoré).
     """
 
     __tablename__ = "license_bit"
@@ -213,6 +218,7 @@ class LicenseBit(Base):
     # Cellule(s) d'origine dans le classeur, pour pouvoir rejouer le calcul.
     source_cell: Mapped[str | None] = mapped_column(String(64))
     unmapped_reason: Mapped[str | None] = mapped_column(Text)
+    constant_value: Mapped[bool | None] = mapped_column(Boolean)
 
     word: Mapped[LicenseWord] = relationship(back_populates="bits")
     options: Mapped[list[Option]] = relationship(secondary=license_bit_option)

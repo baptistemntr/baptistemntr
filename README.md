@@ -120,9 +120,13 @@ Ouvrir http://localhost:5500 (le backend doit tourner sur le port 8010). Détail
   5 compteurs matériels (pas une somme pondérée comme HDR), numéro de dongle calculé —
   voir `docs/04-regles-du-classeur.md` § 4. Une fonction (« TC Spacebus ») reste signalée,
   sans contrôle sur l'écran CRT pour la piloter.
-- [ ] Licence SATCORE : mécanisme encore différent (constantes fixes mêlées à des options),
-  pas encore étudié
-- [ ] Correspondance bit → option d'HDR et de CRT à rejouer sur une licence réellement émise
+- [x] Licence SATCORE peuplée (`tools/import_licenses.py`, mots DEM/DEMLI, 37 bits) : la
+  plupart des bits sont des constantes du classeur (aucun contrôle, base toujours incluse),
+  seuls 3 dépendent réellement d'une option ; le mot DEMLI est entièrement figé (`0x2E`) —
+  voir `docs/04-regles-du-classeur.md` § 4. 4 bits signalés (constantes référencées sans
+  contrôle pour les activer, même anomalie que HDR).
+- [ ] Correspondance bit → option d'HDR, CRT et SATCORE à rejouer sur une licence réellement
+  émise
 - [ ] Identification de l'attribut « référence commerciale » dans Agile — localisé côté UI
   Agile (« Safran Sales Reference », onglet Sales - Export Control), introuvable via
   Snowflake malgré exploration systématique ; probablement à accès restreint (export

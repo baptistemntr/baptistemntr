@@ -263,8 +263,11 @@ def build_license(session: Session, family_code: str, selected_ids: set[int]) ->
         total = 0
         detail = []
         for bit in word.bits:
-            # OR : un bit peut dépendre de plusieurs options (ex. « 4D-TCM ou 6D-TCM »).
-            on = any(o.id in selected_ids for o in bit.options)
+            # Un bit figé (SATCORE) ignore la sélection ; sinon OR entre ses options
+            # (ex. « 4D-TCM ou 6D-TCM »).
+            on = bit.constant_value if bit.constant_value is not None else (
+                any(o.id in selected_ids for o in bit.options)
+            )
             total += bit.weight if on else 0
             detail.append({
                 "position": bit.position, "weight": bit.weight, "label": bit.label,

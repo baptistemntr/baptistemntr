@@ -4,13 +4,15 @@
 Contrairement à la grille articles (`import_workbook.py`), la formule de licence n'est pas
 générique d'une gamme à l'autre : chaque onglet « Licences <Gamme> » a sa propre logique,
 tracée ici à la main depuis les formules Excel (voir docs/04-regles-du-classeur.md § 4).
-Seul **HDR** est couvert pour l'instant — CRT (FEP) et SATCORE ont des mécanismes
-structurellement différents (comptages, constantes) qui restent à étudier séparément.
+HDR et SATCORE sont couverts ici (mots en somme pondérée de bits). CRT (FEP) suit un
+schéma entièrement différent (table de fonctions + compteurs, pas de somme) — codé
+directement dans `resolver.build_fep_license`, pas dans ce fichier.
 
-Chaque bit référence un contrôle de l'écran HDR par son nom technique (`control_name`),
-et non par son libellé : c'est la clé stable qui survit à un renommage d'affichage. Un
-bit sans référence (compteur numérique non modélisé, ex. nombre de MODCODs) porte une
-raison explicite plutôt que d'être compté silencieusement comme 0 sans justification.
+Chaque bit référence un contrôle de l'écran de la gamme par son nom technique
+(`control_name`), et non par son libellé : c'est la clé stable qui survit à un renommage
+d'affichage. Un bit sans référence (compteur numérique non modélisé, ex. nombre de
+MODCODs) porte une raison explicite plutôt que d'être compté silencieusement comme 0 sans
+justification.
 
     python3 tools/import_licenses.py --sortie data/licenses.json
 """
@@ -25,14 +27,18 @@ from pathlib import Path
 class Bit:
     """Un bit d'un mot de licence.
 
-    `controls` : contrôle(s) HDR dont dépend ce bit (OR si plusieurs — le classeur ne
-    combine jamais autrement). Vide si `unmapped_reason` est renseigné.
+    `controls` : contrôle(s) dont dépend ce bit (OR si plusieurs — le classeur ne combine
+    jamais autrement). `constant` : pour les bits que le classeur fixe en dur, sans aucun
+    contrôle (ex. `Licences SATCORE!E5` = littéralement `VRAI`, une base toujours incluse) —
+    prime sur `controls`, qui doit alors rester vide. Ni l'un ni l'autre : `unmapped_reason`
+    est requis.
     """
 
     label: str
     source_cell: str
     controls: list[str] = field(default_factory=list)
     unmapped_reason: str | None = None
+    constant: bool | None = None
 
 
 def word(code: str, label: str, bits: list[Bit]) -> dict:
@@ -47,6 +53,7 @@ def word(code: str, label: str, bits: list[Bit]) -> dict:
                 "source_cell": b.source_cell,
                 "controls": b.controls,
                 "unmapped_reason": b.unmapped_reason,
+                "constant": b.constant,
             }
             for i, b in enumerate(bits)
         ],
@@ -149,6 +156,80 @@ MODLI_BITS = [
     Bit("Constellation impairments", "Licences HDR!T19", ["HDR_Test_Mod_Impairements"]),
 ]
 
+# --- SATCORE — mot DEM (démodulateur, DEM1 seulement — DEM2..DEM6 recopient DEM1 selon le
+# nombre de démodulateurs installés, comme les DEM d'HDR : même non-couverture, quantité de
+# matériel plutôt que contenu de licence) -----------------------------------------------
+#
+# Contrairement à HDR, la plupart des bits de ce mot ne dépendent **d'aucun contrôle** :
+# `Licences SATCORE!E5:E33` les fixe en dur (`VRAI`/`FAUX` littéraux, pas des formules) —
+# une base de fonctionnalités toujours incluse, indépendante de la configuration. Seuls
+# trois bits (D16, D20, D21) sont pilotés par une case de l'écran SATCORE ; quatre autres
+# (D23, D24, D25, D26) référencent des constantes (`D45`, `D46`, `D48`) qui, comme
+# `HDR_Advanced_DEAF`, n'ont aucun contrôle pour les activer — signalées plutôt que
+# silencieusement comptées à 0. Le classeur ne nomme que les bits qui ont un contrôle ou
+# une constante nommée ; les autres n'ont pas de libellé au-delà de leur position (`Dn`).
+SATCORE_DEM_BITS = [
+    Bit("D0", "Licences SATCORE!E5", constant=True),
+    Bit("D1", "Licences SATCORE!E6", constant=True),
+    Bit("D2", "Licences SATCORE!E7", constant=True),
+    Bit("D3", "Licences SATCORE!E8", constant=True),
+    Bit("D4", "Licences SATCORE!E9", constant=True),
+    Bit("D5", "Licences SATCORE!E10", constant=True),
+    Bit("D6", "Licences SATCORE!E11", constant=True),
+    Bit("D7", "Licences SATCORE!E12", constant=True),
+    Bit("D8", "Licences SATCORE!E13", constant=True),
+    Bit("D9", "Licences SATCORE!E14", constant=False),
+    Bit("D10", "Licences SATCORE!E15", constant=True),
+    Bit("D11", "Licences SATCORE!E16", constant=True),
+    Bit("D12", "Licences SATCORE!E17", constant=False),
+    Bit("D13", "Licences SATCORE!E18", constant=True),
+    Bit("D14", "Licences SATCORE!E19", constant=True),
+    Bit("D15", "Licences SATCORE!E20", constant=False),
+    Bit("DVB-S2", "Licences SATCORE!E21", ["Satcore_DVBS2"]),
+    Bit("D17", "Licences SATCORE!E22", constant=False),
+    Bit("D18", "Licences SATCORE!E23", constant=False),
+    Bit("D19", "Licences SATCORE!E24", constant=False),
+    Bit("VCM (for DVB-S2)", "Licences SATCORE!E25", ["Satcore_VCM"]),
+    Bit("S band input", "Licences SATCORE!E26", ["Satcore_Sband"]),
+    Bit("D22", "Licences SATCORE!E27", constant=False),
+    Bit("Combi", "Licences SATCORE!E28", unmapped_reason=(
+        "Recopie Licences SATCORE!D48 (« Combi »), qui n'a aucun contrôle sur l'écran "
+        "SATCORE pour l'activer — reste figé à FAUX dans le classeur."
+    )),
+    Bit("Combi", "Licences SATCORE!E29", unmapped_reason=(
+        "Recopie Licences SATCORE!D48 (« Combi »), qui n'a aucun contrôle sur l'écran "
+        "SATCORE pour l'activer — reste figé à FAUX dans le classeur."
+    )),
+    Bit("6D-TCM ou DVB-S & DSNG transport layer", "Licences SATCORE!E30", unmapped_reason=(
+        "OU(Licences SATCORE!D45, D46) : ni « 6D-TCM (DSNG 5/6, IAI 8/9) » ni « DVB-S & "
+        "DSNG transport layer » n'ont de contrôle sur l'écran SATCORE — restent figées à "
+        "FAUX dans le classeur."
+    )),
+    Bit("6D-TCM (DSNG 5/6, IAI 8/9)", "Licences SATCORE!E31", unmapped_reason=(
+        "Recopie Licences SATCORE!D45, qui n'a aucun contrôle sur l'écran SATCORE pour "
+        "l'activer — reste figé à FAUX dans le classeur."
+    )),
+    Bit("D27", "Licences SATCORE!E32", constant=False),
+    Bit("D28", "Licences SATCORE!E33", constant=False),
+]
+
+# --- SATCORE — mot DEMLI (licence globale) ----------------------------------------------
+#
+# Entièrement figé : aucun des 8 bits ne dépend d'un contrôle ni d'un compteur modélisable.
+# D1 à D6 viennent de `Licences SATCORE!O18` (= 23 en dur, aucune formule ni contrôle ne
+# l'alimente) converti en binaire — une clé toujours identique pour toute configuration
+# SATCORE, tant que cette constante du classeur n'est pas changée par l'IMI.
+SATCORE_DEMLI_BITS = [
+    Bit("D0", "Licences SATCORE!O4", constant=False),
+    Bit("D1", "Licences SATCORE!O5", constant=True),
+    Bit("D2", "Licences SATCORE!O6", constant=True),
+    Bit("D3", "Licences SATCORE!O7", constant=True),
+    Bit("D4", "Licences SATCORE!O8", constant=False),
+    Bit("D5", "Licences SATCORE!O9", constant=True),
+    Bit("D6", "Licences SATCORE!O10", constant=False),
+    Bit("D7", "Licences SATCORE!O11", constant=False),
+]
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__,
@@ -166,6 +247,13 @@ def main() -> None:
                     word("MODLI", "Licence modulateur", MODLI_BITS),
                 ],
             },
+            {
+                "family_code": "SATCORE",
+                "words": [
+                    word("DEM", "Licence démodulateur", SATCORE_DEM_BITS),
+                    word("DEMLI", "Licence globale", SATCORE_DEMLI_BITS),
+                ],
+            },
         ],
     }
 
@@ -177,8 +265,9 @@ def main() -> None:
         1 for f in data["families"] for w in f["words"] for b in w["bits"]
         if b["unmapped_reason"]
     )
-    print(f"1 gamme (HDR), 3 mots, {total_bits} bits dont {unmapped} non calculables "
-          f"→ {args.sortie}")
+    families = ", ".join(f["family_code"] for f in data["families"])
+    print(f"{len(data['families'])} gammes ({families}), {total_bits} bits au total dont "
+          f"{unmapped} non calculables → {args.sortie}")
 
 
 if __name__ == "__main__":

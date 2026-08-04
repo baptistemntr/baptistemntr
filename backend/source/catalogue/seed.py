@@ -155,6 +155,7 @@ def load_licenses(session: Session, path: Path) -> dict:
                         f"Contrôle(s) introuvable(s) dans le catalogue chargé : "
                         f"{', '.join(unresolved)}" if unresolved else None
                     ),
+                    constant_value=bit.get("constant"),
                     options=[options_by_control[c] for c in bit["controls"] if c in options_by_control],
                 ))
                 report["bits"] += 1
