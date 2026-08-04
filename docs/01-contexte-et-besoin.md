@@ -87,9 +87,18 @@ Le classeur a été développé **à la main par Tristan en 2019**. Il existe :
 
 ## 5. Points à confirmer
 
-- [ ] Récupérer le classeur Excel de référence et le document de mise à jour de Tristan.
-- [ ] Identifier l'attribut Agile qui porte la **référence commerciale** (`ATTID` dans
-      `AGILE_FLEX`) — voir `tools/discover_agile.py`.
+- [x] Récupérer le classeur Excel de référence.
+- [ ] Identifier l'attribut Agile qui porte la **référence commerciale**. Piste en cours :
+      dans l'UI Agile, le champ s'appelle **« Safran Sales Reference »**, onglet
+      **« Sales - Export Control »** (ex. `CRT-1-2U` pour S128359). Recherché sans succès
+      dans `AGILE_FLEX` (ATTID 1020/2208 = descriptions de lignes de BOM, pas cet
+      attribut), dans `REV.TEXT01-15` (vides), et dans les tables candidates de
+      définition d'attributs (`APPLIEDTO`, `OBJECT_DETAIL` : aucune n'a de colonne de
+      libellé). Le nom « Export Control » suggère une donnée à accès restreint,
+      possiblement absente de cette réplique Snowflake pour cette raison. Voir
+      `tools/discover_agile.py`, notamment `--item-number` et `--list-attid-tables`.
+      **Prochaine étape recommandée** : demander directement le numéro d'ATTID à un
+      administrateur Agile (écran Admin > Classes > Attributs).
 - [ ] Confirmer le critère « produit en production » côté Agile (cycle de vie).
 - [ ] Rétro-ingénierie exacte de la **formule de clé de licence** (ordre des bits, encodage,
       éventuel checksum) à partir de l'onglet licence.
