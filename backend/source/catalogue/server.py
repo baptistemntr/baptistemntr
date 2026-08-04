@@ -16,10 +16,11 @@ from catalogue.schemas import (
     ConfigurationResult,
     FamilyDetailOut,
     FamilyOut,
+    LicenseSeedReport,
     SeedReport,
     SyncReport,
 )
-from catalogue.seed import load_catalogue
+from catalogue.seed import load_catalogue, load_licenses
 
 app = FastAPI(title="Catalogue Industriel")
 
@@ -108,6 +109,27 @@ def seed() -> SeedReport:
     session: Session = SessionLocal()
     try:
         return SeedReport(**load_catalogue(session, path))
+    finally:
+        session.close()
+
+
+@app.post("/api/seed-licenses", response_model=LicenseSeedReport)
+def seed_licenses() -> LicenseSeedReport:
+    """Recharge les mots de licence (`tools/import_licenses.py`).
+
+    À appeler après `/api/seed` : les bits référencent des options qui doivent déjà
+    exister. Ne couvre que les gammes présentes dans le fichier (HDR pour l'instant) —
+    les autres gardent un panneau de licence vide plutôt qu'une clé fausse.
+    """
+    path = Path(os.getenv("LICENSES_SEED", "../data/licenses.json"))
+    if not path.exists():
+        raise HTTPException(
+            status_code=503,
+            detail=f"{path} absent — lancer d'abord tools/import_licenses.py.",
+        )
+    session: Session = SessionLocal()
+    try:
+        return LicenseSeedReport(**load_licenses(session, path))
     finally:
         session.close()
 

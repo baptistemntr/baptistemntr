@@ -77,6 +77,13 @@ class SeedReport(BaseModel):
     findings: int
 
 
+class LicenseSeedReport(BaseModel):
+    families: int
+    words: int
+    bits: int
+    unmapped: int
+
+
 class SyncReport(BaseModel):
     fetched: int
     created: int

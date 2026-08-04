@@ -164,10 +164,13 @@ def build_license(session: Session, family_code: str, selected_ids: set[int]) ->
         total = 0
         detail = []
         for bit in word.bits:
-            on = bit.option_id is not None and bit.option_id in selected_ids
+            # OR : un bit peut dépendre de plusieurs options (ex. « 4D-TCM ou 6D-TCM »).
+            on = any(o.id in selected_ids for o in bit.options)
             total += bit.weight if on else 0
-            detail.append({"position": bit.position, "weight": bit.weight,
-                           "label": bit.label, "value": int(on)})
+            detail.append({
+                "position": bit.position, "weight": bit.weight, "label": bit.label,
+                "value": int(on), "unmapped_reason": bit.unmapped_reason,
+            })
         out[word.code] = {
             "label": word.label,
             "value": total,

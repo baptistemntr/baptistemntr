@@ -81,6 +81,15 @@ Charger le résultat dans la base (`POST /api/seed`), puis vérifier la non-rég
 cd backend && PYTHONPATH=source python -m pytest tests/ -q
 ```
 
+Pour les licences (HDR seulement pour l'instant) :
+
+```bash
+python3 tools/import_licenses.py --sortie data/licenses.json
+```
+
+Puis charger via `POST /api/seed-licenses` (après `/api/seed`, les bits référencent des
+options qui doivent déjà exister).
+
 Deux outils d'exploration restent disponibles : `tools/inspect_excel.py` (cartographie
 brute d'un onglet) et `tools/extract_controls.py` (libellés et groupes des contrôles).
 
@@ -104,8 +113,15 @@ Ouvrir http://localhost:5500 (le backend doit tourner sur le port 8010). Détail
 - [x] Formule de licence identifiée (somme pondérée de bits → hexadécimal)
 - [x] Interface commerciale (V1) : choix de gamme, configuration guidée, récapitulatif
   permanent, infobulles, export par impression — vérifiée dans un navigateur
-- [ ] Correspondance bit → option à rejouer sur des licences réellement émises
-- [ ] Identification de l'attribut « référence commerciale » dans Agile
+- [x] Licences HDR peuplées (`tools/import_licenses.py`) : 48/61 bits calculés (directs ou
+  OU entre options), 13 signalés (compteurs numériques non modélisés, 2 anomalies
+  d'import) — voir `docs/04-regles-du-classeur.md` § 4
+- [ ] Licences CRT (FEP) et SATCORE : mécanismes différents de HDR, pas encore étudiés
+- [ ] Correspondance bit → option d'HDR à rejouer sur une licence réellement émise
+- [ ] Identification de l'attribut « référence commerciale » dans Agile — localisé côté UI
+  Agile (« Safran Sales Reference », onglet Sales - Export Control), introuvable via
+  Snowflake malgré exploration systématique ; probablement à accès restreint (export
+  control). Prochaine étape : demander l'ATTID à un administrateur Agile.
 - [ ] Arbitrage des 129 anomalies héritées avec l'IMI
 - [ ] Libellés de groupe commerciaux (certains affichent encore le `GroupName` technique
   du classeur, ex. `CRT_options_panneau`) — à valider avec l'IMI, comme pour les options

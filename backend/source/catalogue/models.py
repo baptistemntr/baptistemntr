@@ -181,8 +181,27 @@ class LicenseWord(Base):
     )
 
 
+# Certains bits dépendent de plusieurs options à la fois (ex. MODLI!D6 = 4D-TCM OU 6D-TCM
+# OU 6D-TCM-DSNG) : la table associative porte la sémantique « au moins une cochée ».
+license_bit_option = Table(
+    "license_bit_option",
+    Base.metadata,
+    Column("bit_id", ForeignKey("license_bit.id"), primary_key=True),
+    Column("option_id", ForeignKey("option.id"), primary_key=True),
+)
+
+
 class LicenseBit(Base):
-    """Un bit d'un mot de licence : ajoute son poids si l'option associée est retenue."""
+    """Un bit d'un mot de licence : ajoute son poids si au moins une option associée est
+    retenue (OR — le seul opérateur employé par le classeur pour combiner plusieurs options
+    sur un même bit).
+
+    Certains bits du classeur dépendent d'un compteur numérique (nombre de MODCODs, nombre
+    d'unités de modulation...) plutôt que d'une option cochée — notre modèle ne représente
+    que des choix discrets, pas ces quantités. Un tel bit n'a aucune option associée et
+    porte `unmapped_reason` : il compte toujours pour 0 plutôt que de fausser la clé
+    silencieusement.
+    """
 
     __tablename__ = "license_bit"
 
@@ -191,8 +210,9 @@ class LicenseBit(Base):
     position: Mapped[int] = mapped_column(Integer, nullable=False)
     weight: Mapped[int] = mapped_column(Integer, nullable=False)
     label: Mapped[str] = mapped_column(String(255), nullable=False)
-    option_id: Mapped[int | None] = mapped_column(ForeignKey("option.id"))
-    # Cellule d'origine dans le classeur, pour pouvoir rejouer le calcul.
+    # Cellule(s) d'origine dans le classeur, pour pouvoir rejouer le calcul.
     source_cell: Mapped[str | None] = mapped_column(String(64))
+    unmapped_reason: Mapped[str | None] = mapped_column(Text)
 
     word: Mapped[LicenseWord] = relationship(back_populates="bits")
+    options: Mapped[list[Option]] = relationship(secondary=license_bit_option)

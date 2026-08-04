@@ -11,7 +11,7 @@ from pathlib import Path
 from sqlalchemy.orm import Session
 
 from catalogue.models import (
-    ArticleMapping, Option, OptionGroup, ProductFamily,
+    ArticleMapping, LicenseBit, LicenseWord, Option, OptionGroup, ProductFamily,
 )
 from catalogue.resolver import signature_of
 
@@ -108,6 +108,63 @@ def _add_group(session: Session, family_code: str, group: dict, position: int,
         created[caption] = option
     session.flush()
     return created
+
+
+def load_licenses(session: Session, path: Path) -> dict:
+    """Remplace les mots de licence des gammes couvertes par le fichier.
+
+    Doit être appelé après `load_catalogue` (les options doivent déjà exister). Ne touche
+    pas aux gammes absentes du fichier — CRT et SATCORE, non couvertes pour l'instant,
+    gardent un panneau de licence vide plutôt qu'une clé fausse.
+    """
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+
+    report = {"families": 0, "words": 0, "bits": 0, "unmapped": 0}
+    for family in data["families"]:
+        code = family["family_code"]
+        options_by_control = {
+            o.control_name: o
+            for o in session.query(Option)
+            .join(OptionGroup)
+            .filter(OptionGroup.family_code == code, Option.kind == "license")
+            .all()
+        }
+
+        for old_word in session.query(LicenseWord).filter(LicenseWord.family_code == code).all():
+            session.delete(old_word)
+        session.flush()
+
+        for position, word in enumerate(family["words"]):
+            record = LicenseWord(
+                family_code=code, code=word["code"], label=word["label"], position=position
+            )
+            session.add(record)
+            session.flush()
+
+            for bit in word["bits"]:
+                unresolved = [c for c in bit["controls"] if c not in options_by_control]
+                for control_name in unresolved:
+                    bit.setdefault("_missing", []).append(control_name)
+                session.add(LicenseBit(
+                    word_id=record.id,
+                    position=bit["position"],
+                    weight=bit["weight"],
+                    label=bit["label"],
+                    source_cell=bit["source_cell"],
+                    unmapped_reason=bit["unmapped_reason"] or (
+                        f"Contrôle(s) introuvable(s) dans le catalogue chargé : "
+                        f"{', '.join(unresolved)}" if unresolved else None
+                    ),
+                    options=[options_by_control[c] for c in bit["controls"] if c in options_by_control],
+                ))
+                report["bits"] += 1
+                if bit["unmapped_reason"] or unresolved:
+                    report["unmapped"] += 1
+            report["words"] += 1
+        report["families"] += 1
+
+    session.commit()
+    return report
 
 
 def _add_extra_options(session: Session, family_code: str, extras: list[dict],

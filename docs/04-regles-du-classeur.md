@@ -91,9 +91,27 @@ Le FEP suit un schéma différent : des identifiants de fonction (`Licence FEP!A
 des compteurs encodés en hexadécimal sur deux chiffres — `n` bits bas à 1 pour `n` unités
 (`TPP`, `SPP`, `IFS` : 6 max ; `UTP`, `ECP` : 2 max).
 
-> **Reste à confirmer avec l'IMI** : l'ordre exact des bits est relevé, mais la
-> correspondance bit → option n'a pas encore été rejouée sur des licences réellement
-> émises. C'est la dernière vérification avant de considérer les licences comme reprises.
+**HDR est peuplé** (`tools/import_licenses.py`, mots DEM/DEMLI/MODLI, 61 bits). 48 bits sur
+61 sont calculés directement depuis une option (ou un OU entre plusieurs options — le seul
+opérateur combinant plusieurs options sur un même bit dans le classeur). Les 13 restants
+sont signalés plutôt que silencieusement comptés à 0 :
+
+- **11 bits dépendent d'un compteur numérique** non représenté dans le modèle actuel
+  (nombre de MODCODs, nombre d'unités de modulation, nombre de sorties IF) ou d'une
+  combinaison OU/ET impliquant un tel compteur — ces champs sont des saisies libres sur
+  l'écran HDR, pas des choix parmi des options discrètes ;
+- **2 bits référencent des contrôles absents du catalogue chargé** : `HDR_Advanced_DEAF`
+  n'a aucun libellé dans le classeur (donc jamais importé), et `HDR_RANGING_RANGING_DVBS2`
+  a le même libellé (« Ranging ») qu'une colonne de la grille articles, ce qui l'exclut
+  silencieusement de l'extraction — anomalie d'import à corriger séparément.
+
+**CRT (FEP) et SATCORE restent à faire** : mécanismes structurellement différents
+(comptages de fonctions pour FEP, constantes fixes mêlées à des options pour SATCORE),
+pas de simple somme pondérée de bits comme HDR. Leur panneau de licence reste vide plutôt
+que d'afficher une clé fausse.
+
+> **Reste à confirmer avec l'IMI** : la correspondance bit → option d'HDR n'a pas encore
+> été rejouée sur une licence réellement émise pour une validation de bout en bout.
 
 ## 5. Ce que le classeur porte au-delà de la grille
 
