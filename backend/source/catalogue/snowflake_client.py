@@ -12,14 +12,23 @@ from dotenv import load_dotenv
 # Chemin explicite plutôt qu'une recherche depuis le répertoire courant : ce module est
 # importé aussi bien depuis `backend/` (uvicorn) que depuis la racine du dépôt
 # (tools/discover_agile.py), et doit trouver le même .env dans les deux cas.
-load_dotenv(Path(__file__).resolve().parents[2] / ".env")
+_BACKEND_DIR = Path(__file__).resolve().parents[2]
+load_dotenv(_BACKEND_DIR / ".env")
 
 SNOWFLAKE_ACCOUNT = os.getenv("SNOWFLAKE_ACCOUNT", "safran-sed_space")
 SNOWFLAKE_HOST = os.getenv(
     "SNOWFLAKE_HOST", "safran-sed_space.privatelink.snowflakecomputing.com"
 )
 SNOWFLAKE_USER = os.getenv("SNOWFLAKE_USER", "")
-SNOWFLAKE_PRIVATE_KEY_FILE = os.getenv("SNOWFLAKE_PRIVATE_KEY_FILE", "")
+
+# Chemin de la clé : relatif à `backend/` dans le .env (ex. ./secrets/rsa_GS4_key.p8), mais
+# le répertoire courant réel dépend de qui lance le processus (uvicorn depuis backend/,
+# discover_agile.py depuis la racine du dépôt) — on le résout donc nous-mêmes plutôt que
+# de laisser le connecteur Snowflake l'interpréter par rapport au CWD.
+_key_file = os.getenv("SNOWFLAKE_PRIVATE_KEY_FILE", "")
+SNOWFLAKE_PRIVATE_KEY_FILE = (
+    str(_BACKEND_DIR / _key_file) if _key_file and not os.path.isabs(_key_file) else _key_file
+)
 SNOWFLAKE_PRIVATE_KEY_PWD = os.getenv("SNOWFLAKE_PRIVATE_KEY_PWD", "")
 SNOWFLAKE_ROLE = os.getenv("SNOWFLAKE_ROLE", "RF_GS3_ANALYST")
 SNOWFLAKE_WAREHOUSE = os.getenv("SNOWFLAKE_WAREHOUSE", "WH_GS3")
