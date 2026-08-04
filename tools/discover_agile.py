@@ -28,6 +28,16 @@ COLUMNS_QUERY = """
     ORDER BY ORDINAL_POSITION
 """
 
+# Plutôt que deviner des noms de table un par un : toute table portant une colonne liée à
+# ATTID est une candidate pour la table de définition des attributs (nom, onglet...) —
+# celle qui manque encore pour relier « Safran Sales Reference » à son numéro.
+TABLES_WITH_ATTID_QUERY = """
+    SELECT TABLE_NAME, COLUMN_NAME
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'AGILE' AND COLUMN_NAME ILIKE '%ATT%ID%'
+    ORDER BY TABLE_NAME
+"""
+
 ITEM_LOOKUP_QUERY = """
     SELECT ID, CLASS, ITEM_NUMBER, DESCRIPTION, DELETE_FLAG
     FROM ITEM
@@ -127,6 +137,11 @@ def main() -> None:
     parser.add_argument(
         "--table", default="ITEM", help="Table dont on veut les colonnes (défaut : ITEM)"
     )
+    parser.add_argument(
+        "--list-attid-tables", action="store_true",
+        help="Liste toutes les tables du schéma AGILE portant une colonne liée à ATTID "
+             "(candidates pour la table de définition des attributs)",
+    )
     args = parser.parse_args()
 
     if not os.getenv("SNOWFLAKE_USER"):
@@ -134,6 +149,9 @@ def main() -> None:
 
     conn = connect()
     try:
+        if args.list_attid_tables:
+            show("Tables avec une colonne liée à ATTID", fetch_all(conn, TABLES_WITH_ATTID_QUERY))
+            return
         if args.find_text:
             query, verb = (FIND_EXACT_QUERY, "égal à") if args.exact else (FIND_TEXT_QUERY, "contenant")
             show(f"AGILE_FLEX {verb} « {args.find_text} »",
