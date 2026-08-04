@@ -5,6 +5,14 @@ authentification par paire de clés RSA sur le compte de service GS3_SERVICE_USE
 """
 
 import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# Chemin explicite plutôt qu'une recherche depuis le répertoire courant : ce module est
+# importé aussi bien depuis `backend/` (uvicorn) que depuis la racine du dépôt
+# (tools/discover_agile.py), et doit trouver le même .env dans les deux cas.
+load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 SNOWFLAKE_ACCOUNT = os.getenv("SNOWFLAKE_ACCOUNT", "safran-sed_space")
 SNOWFLAKE_HOST = os.getenv(
