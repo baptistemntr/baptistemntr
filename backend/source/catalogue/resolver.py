@@ -13,7 +13,9 @@ propose jamais un article « approchant », il renvoie « See Manufacturing ».
 
 from sqlalchemy.orm import Session
 
-from catalogue.models import Article, ArticleMapping, LicenseWord, Option, OptionRule
+from catalogue.models import (
+    Article, ArticleMapping, LicenseWord, Option, OptionGroup, OptionRule,
+)
 
 # Ce que le classeur affiche quand aucune ligne ne correspond.
 UNKNOWN_ITEM = "Doesn't exist"
@@ -143,13 +145,110 @@ def _selected_options(session: Session, selected_ids: set[int]) -> list[Option]:
     return session.query(Option).filter(Option.id.in_(selected_ids)).all()
 
 
-def build_license(session: Session, family_code: str, selected_ids: set[int]) -> dict:
-    """Construit les mots de licence de la gamme.
+# --- CRT (FEP) -----------------------------------------------------------------------
+#
+# Contrairement à HDR, l'onglet « Licence FEP » ne calcule aucun mot en somme pondérée :
+# la section « 9 - Dongle FEP » du classeur (`CRT!B49:J61`) affiche telle quelle une table
+# de fonctions actives (identifiant + libellé + booléen) et cinq compteurs matériels
+# encodés en hexadécimal sur deux chiffres, à charge pour l'IMI de les reporter à la main
+# dans l'outil de programmation du dongle. `build_fep_license` reproduit cette table.
+#
+# Chaque fonction référence le(s) contrôle(s) CRT dont dépend son booléen dans
+# `Licence FEP` (OR s'il y en a plusieurs, comme pour HDR) ; certaines sont de purs
+# miroirs d'un autre contrôle (`C7=C5`, `C9=C11`, `C14=C10`) ou de la même case combinée
+# (`C23=OR(C11,C12)`, utilisée telle quelle par les DEUX lignes 22 et 24 du classeur — un
+# raccourci d'affichage du classeur, reproduit à l'identique, pas une erreur de reprise).
+FEP_FUNCTIONS: list[tuple[int, str, list[str]]] = [
+    (1, "RDP access", ["CheckBox4"]),
+    (2, "COP-1", ["CheckBox16"]),
+    (20, "FEP Product", ["CheckBox4"]),
+    (21, "FEP - TC Segment", ["CheckBox17"]),
+    (22, "FEP - TC Encrypt", ["CheckBox19", "CheckBox20"]),
+    (23, "FEP - TM packet", ["CheckBox13"]),
+    (24, "FEP - TM Decrypt", ["CheckBox19", "CheckBox20"]),
+    (25, "FEP - HSM option", ["CheckBox20"]),
+    (26, "FEP - TC Spacebus", []),
+    (27, "FEP - AOS Protocol", ["CheckBox13"]),
+    (28, "FEP - Dual Packet", ["CheckBox14"]),
+]
 
-    Chaque mot est une somme pondérée : un bit retenu ajoute son poids, et le total est
-    rendu en hexadécimal. C'est la transposition directe de
-    `DEC2HEX(SUMIF(valeurs; VRAI; poids))` de l'onglet « Licences <Gamme> ».
+# code, libellé, quantité max (`K3:K7`), contrôle(s) qui l'activent (`L3:L7`).
+FEP_COUNTERS: list[tuple[str, str, int, list[str]]] = [
+    ("TPP", "Telecommand Packet Processor Unit mounted", 6,
+     ["CheckBox16", "CheckBox17", "CheckBox15"]),
+    ("SPP", "TM Space Packet Processor Unit mounted", 6,
+     ["CheckBox13", "CheckBox14", "CheckBox19", "CheckBox20", "CheckBox15"]),
+    ("IFS", "Internal Frame Synchronization mounted", 6, ["CheckBox14"]),
+    ("UTP", "Uplink Telemetry Processor Unit mounted", 2, ["CheckBox15"]),
+    ("ECP", "Echo Commanding Processor Unit mounted", 2, ["CheckBox18"]),
+]
+
+DONGLE_WITH_ENCRYPTION = "S157786"
+DONGLE_WITHOUT_ENCRYPTION = "S157787"
+
+
+def build_fep_license(session: Session, selected_ids: set[int]) -> dict:
+    """Table de licence CRT (dongle FEP) — voir `FEP_FUNCTIONS` ci-dessus."""
+    options = (
+        session.query(Option).join(OptionGroup)
+        .filter(OptionGroup.family_code == "CRT", Option.kind == "license")
+        .all()
+    )
+    selected_controls = {o.control_name for o in options if o.id in selected_ids}
+
+    def any_on(controls: list[str]) -> bool:
+        return any(c in selected_controls for c in controls)
+
+    functions = [
+        {
+            "id": function_id,
+            "label": label,
+            "active": any_on(controls),
+            "unmapped_reason": None if controls else (
+                "Aucun contrôle de l'écran CRT ne pilote cette fonction — "
+                "Licence FEP!C13 reste figé à FAUX dans le classeur."
+            ),
+        }
+        for function_id, label, controls in FEP_FUNCTIONS
+    ]
+    counters = [
+        {
+            "code": code,
+            "label": label,
+            "count": max_count if any_on(controls) else 0,
+            # `DEC2HEX(BIN2DEC(REPT("0",6-L)&REPT("1",L)),2)` : les `L` bits bas à 1, pas
+            # la valeur `L` elle-même — 6 unités s'écrit 0x3F (0b111111), pas 0x06.
+            "hex": format((1 << max_count) - 1 if any_on(controls) else 0, "02X"),
+        }
+        for code, label, max_count, controls in FEP_COUNTERS
+    ]
+
+    rdp_access = any_on(["CheckBox4"])
+    encryption = any_on(["CheckBox19", "CheckBox20"])
+    dongle_part_number = (
+        "NA" if not rdp_access
+        else DONGLE_WITH_ENCRYPTION if encryption else DONGLE_WITHOUT_ENCRYPTION
+    )
+
+    return {
+        "kind": "fep",
+        "dongle_part_number": dongle_part_number,
+        "functions": functions,
+        "counters": counters,
+    }
+
+
+def build_license(session: Session, family_code: str, selected_ids: set[int]) -> dict:
+    """Construit la licence de la gamme.
+
+    CRT suit un schéma dédié (`build_fep_license`, table de fonctions + compteurs). Les
+    autres gammes à licence (HDR pour l'instant) sont des mots en somme pondérée : un bit
+    retenu ajoute son poids, et le total est rendu en hexadécimal — transposition directe
+    de `DEC2HEX(SUMIF(valeurs; VRAI; poids))` de l'onglet « Licences <Gamme> ».
     """
+    if family_code == "CRT":
+        return build_fep_license(session, selected_ids)
+
     words = (
         session.query(LicenseWord)
         .filter(LicenseWord.family_code == family_code)

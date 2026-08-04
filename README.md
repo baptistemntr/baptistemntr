@@ -116,8 +116,13 @@ Ouvrir http://localhost:5500 (le backend doit tourner sur le port 8010). Détail
 - [x] Licences HDR peuplées (`tools/import_licenses.py`) : 48/61 bits calculés (directs ou
   OU entre options), 13 signalés (compteurs numériques non modélisés, 2 anomalies
   d'import) — voir `docs/04-regles-du-classeur.md` § 4
-- [ ] Licences CRT (FEP) et SATCORE : mécanismes différents de HDR, pas encore étudiés
-- [ ] Correspondance bit → option d'HDR à rejouer sur une licence réellement émise
+- [x] Licence CRT (FEP) peuplée (`resolver.build_fep_license`) : table de 11 fonctions +
+  5 compteurs matériels (pas une somme pondérée comme HDR), numéro de dongle calculé —
+  voir `docs/04-regles-du-classeur.md` § 4. Une fonction (« TC Spacebus ») reste signalée,
+  sans contrôle sur l'écran CRT pour la piloter.
+- [ ] Licence SATCORE : mécanisme encore différent (constantes fixes mêlées à des options),
+  pas encore étudié
+- [ ] Correspondance bit → option d'HDR et de CRT à rejouer sur une licence réellement émise
 - [ ] Identification de l'attribut « référence commerciale » dans Agile — localisé côté UI
   Agile (« Safran Sales Reference », onglet Sales - Export Control), introuvable via
   Snowflake malgré exploration systématique ; probablement à accès restreint (export

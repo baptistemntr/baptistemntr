@@ -105,10 +105,26 @@ sont signalés plutôt que silencieusement comptés à 0 :
   a le même libellé (« Ranging ») qu'une colonne de la grille articles, ce qui l'exclut
   silencieusement de l'extraction — anomalie d'import à corriger séparément.
 
-**CRT (FEP) et SATCORE restent à faire** : mécanismes structurellement différents
-(comptages de fonctions pour FEP, constantes fixes mêlées à des options pour SATCORE),
-pas de simple somme pondérée de bits comme HDR. Leur panneau de licence reste vide plutôt
-que d'afficher une clé fausse.
+**CRT (FEP) est peuplé** (`resolver.build_fep_license`). Contrairement à HDR, l'onglet
+« Licence FEP » ne calcule aucune somme pondérée : la section « 9 - Dongle FEP » du
+classeur (`CRT!B49:J61`) affiche telle quelle une table de 11 fonctions (identifiant +
+libellé + booléen) et cinq compteurs matériels (`TPP`, `SPP`, `IFS`, `UTP`, `ECP`) encodés
+en hexadécimal sur deux chiffres — pas de somme, la logique est codée directement plutôt
+que pilotée par un fichier de données comme HDR, une gamme unique avec une structure
+propre ne justifiant pas un format générique. Trois points à noter :
+
+- Le numéro de part du dongle (`Licence FEP!H13`) dépend de deux conditions imbriquées :
+  `NA` si `RDP access` n'est pas coché, sinon `S157787` (sans chiffrement) ou `S157786`
+  (avec, dès que « TM/TC Encryption (AES) » ou « HSM » est coché).
+- Les lignes 22 (« FEP - TC Encrypt ») et 24 (« FEP - TM Decrypt ») de la table affichée
+  utilisent **toutes les deux** `Licence FEP!C23` (`=OR(C11,C12)`) plutôt que leur propre
+  formule (`C9`, `C11`) — un raccourci du classeur, reproduit à l'identique.
+- La fonction 26 (« FEP - TC Spacebus », `Licence FEP!C13`) n'est reliée à **aucun**
+  contrôle de l'écran CRT : elle reste figée à `FAUX` dans le classeur. Signalée via
+  `unmapped_reason` plutôt que silencieusement ignorée.
+
+**SATCORE reste à faire** : mécanisme encore différent (constantes fixes mêlées à des
+options). Son panneau de licence reste vide plutôt que d'afficher une clé fausse.
 
 > **Reste à confirmer avec l'IMI** : la correspondance bit → option d'HDR n'a pas encore
 > été rejouée sur une licence réellement émise pour une validation de bout en bout.

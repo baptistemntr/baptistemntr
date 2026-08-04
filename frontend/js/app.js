@@ -203,11 +203,41 @@ function renderLicense(license) {
     return;
   }
   el.license.hidden = false;
+  if (license.kind === "fep") {
+    renderFepLicense(license);
+    return;
+  }
   for (const [code, word] of Object.entries(license)) {
     const item = el_("div", "license-word");
     item.appendChild(el_("b", null, word.hex));
     item.appendChild(document.createTextNode(` — ${word.label} (${code})`));
     el.license.appendChild(item);
+  }
+}
+
+// CRT (dongle FEP) : pas un mot en somme pondérée comme HDR, mais une table de fonctions
+// actives et de compteurs matériels — reflet direct de la section « 9 - Dongle FEP » du
+// classeur, à charge pour l'IMI de la reporter dans l'outil de programmation du dongle.
+function renderFepLicense(license) {
+  const part = el_("div", "license-word");
+  part.appendChild(document.createTextNode("Dongle FEP : "));
+  part.appendChild(el_("b", null, license.dongle_part_number));
+  el.license.appendChild(part);
+
+  const active = license.functions.filter((f) => f.active);
+  el.license.appendChild(el_(
+    "div", "license-word",
+    active.length
+      ? `Fonctions actives : ${active.map((f) => f.label).join(", ")}`
+      : "Aucune fonction active"
+  ));
+
+  const counters = license.counters.filter((c) => c.count > 0);
+  if (counters.length) {
+    el.license.appendChild(el_(
+      "div", "license-word",
+      `Compteurs : ${counters.map((c) => `${c.code}=${c.hex}`).join(", ")}`
+    ));
   }
 }
 
