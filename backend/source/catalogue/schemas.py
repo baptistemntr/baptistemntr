@@ -216,7 +216,66 @@ class AdminFamilyUpdate(BaseModel):
     description: str | None = None
 
 
+# `constant_value` prime sur `option_ids` quand renseigné (bit figé, ex. SATCORE) ; sinon
+# le bit vaut VRAI si au moins une des options listées est retenue (OR) ; ni l'un ni
+# l'autre : `unmapped_reason` explique pourquoi le bit n'est pas calculable (ex. dépend
+# d'un compteur numérique non modélisé) plutôt que de compter silencieusement pour 0.
+class AdminLicenseBitOut(BaseModel):
+    id: int
+    word_id: int
+    position: int
+    weight: int
+    label: str
+    source_cell: str | None = None
+    unmapped_reason: str | None = None
+    constant_value: bool | None = None
+    option_ids: list[int]
+
+
+class AdminLicenseBitCreate(BaseModel):
+    word_id: int
+    position: int
+    weight: int
+    label: str
+    source_cell: str | None = None
+    unmapped_reason: str | None = None
+    constant_value: bool | None = None
+    option_ids: list[int] = []
+
+
+class AdminLicenseBitUpdate(BaseModel):
+    position: int
+    weight: int
+    label: str
+    source_cell: str | None = None
+    unmapped_reason: str | None = None
+    constant_value: bool | None = None
+    option_ids: list[int] = []
+
+
+class AdminLicenseWordOut(BaseModel):
+    id: int
+    family_code: str
+    code: str
+    label: str
+    position: int
+    bits: list[AdminLicenseBitOut]
+
+
+class AdminLicenseWordCreate(BaseModel):
+    family_code: str
+    code: str
+    label: str
+    position: int = 0
+
+
+class AdminLicenseWordUpdate(BaseModel):
+    label: str
+    position: int = 0
+
+
 class AdminFamilyDetailOut(FamilyOut):
     groups: list[AdminGroupOut]
     articles: list[AdminArticleOut]
     rules: list[AdminRuleOut]
+    license_words: list[AdminLicenseWordOut]

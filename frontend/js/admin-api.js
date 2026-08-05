@@ -79,4 +79,24 @@ const adminApi = {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
     }),
   deleteRule: (id) => adminRequest(`/api/admin/rules/${id}`, { method: "DELETE" }),
+
+  createLicenseWord: (payload) =>
+    adminRequest("/api/admin/license-words", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
+    }),
+  updateLicenseWord: (id, payload) =>
+    adminRequest(`/api/admin/license-words/${id}`, {
+      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
+    }),
+  deleteLicenseWord: (id) => adminRequest(`/api/admin/license-words/${id}`, { method: "DELETE" }),
+
+  createLicenseBit: (payload) =>
+    adminRequest("/api/admin/license-bits", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
+    }),
+  updateLicenseBit: (id, payload) =>
+    adminRequest(`/api/admin/license-bits/${id}`, {
+      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
+    }),
+  deleteLicenseBit: (id) => adminRequest(`/api/admin/license-bits/${id}`, { method: "DELETE" }),
 };

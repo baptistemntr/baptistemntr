@@ -27,10 +27,25 @@
 
 <main id="admin-content" hidden>
 
-  <div id="license-notice" class="message message-warning" hidden>
-    Cette gamme a des licences (DEM, DEMLI…) : elles ne sont pas éditables ici — voir
-    docs/04-regles-du-classeur.md § 4. Le reste (groupes, options, grille, règles) l'est.
-  </div>
+  <section id="license-panel" class="admin-panel" hidden>
+    <h2>Licences</h2>
+    <div id="license-crt-notice" class="message message-warning" hidden>
+      CRT (FEP) calcule sa licence directement dans le code
+      (<code>resolver.build_fep_license</code>) : table de fonctions + compteurs, pas un
+      mot en somme pondérée — pas éditable ici. Voir docs/04-regles-du-classeur.md § 4.
+    </div>
+    <div id="license-words-list"></div>
+    <details class="admin-add" id="license-word-add">
+      <summary>Ajouter un mot de licence</summary>
+      <form id="license-word-create-form">
+        <label>Code technique (fixe une fois créé, ex. DEM, DEMLI, MODLI)
+          <input type="text" id="new-word-code" required>
+        </label>
+        <label>Libellé <input type="text" id="new-word-label" required></label>
+        <button type="submit">Créer</button>
+      </form>
+    </details>
+  </section>
 
   <section class="admin-panel">
     <h2>Gamme</h2>
@@ -117,7 +132,7 @@
 </main>
 
 <script src="js/api.js?v=2"></script>
-<script src="js/admin-api.js?v=2"></script>
-<script src="js/admin.js?v=2"></script>
+<script src="js/admin-api.js?v=3"></script>
+<script src="js/admin.js?v=3"></script>
 </body>
 </html>

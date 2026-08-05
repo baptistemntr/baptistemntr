@@ -7,7 +7,11 @@ const el = {
   loginError: document.getElementById("login-error"),
   familyPicker: document.getElementById("admin-family-picker"),
   content: document.getElementById("admin-content"),
-  licenseNotice: document.getElementById("license-notice"),
+  licensePanel: document.getElementById("license-panel"),
+  licenseCrtNotice: document.getElementById("license-crt-notice"),
+  licenseWordsList: document.getElementById("license-words-list"),
+  licenseWordAdd: document.getElementById("license-word-add"),
+  licenseWordCreateForm: document.getElementById("license-word-create-form"),
   familyForm: document.getElementById("family-form"),
   familyLabel: document.getElementById("family-label"),
   familyDescription: document.getElementById("family-description"),
@@ -37,12 +41,21 @@ function gridOptions() {
   return allOptions().filter((o) => o.kind === "grid");
 }
 
+function licenseOptions() {
+  return allOptions().filter((o) => o.kind === "license");
+}
+
+// CRT (FEP) calcule sa licence directement dans le code (resolver.build_fep_license), pas
+// via des mots/bits en base : créer un mot ici pour cette gamme n'aurait aucun effet.
+const NO_LICENSE_WORDS_FAMILY = "CRT";
+
 async function init() {
   el.loginForm.addEventListener("submit", onLogin);
   el.familyForm.addEventListener("submit", onSaveFamily);
   el.groupCreateForm.addEventListener("submit", onCreateGroup);
   el.articleCreateForm.addEventListener("submit", onCreateArticle);
   el.ruleCreateForm.addEventListener("submit", onCreateRule);
+  el.licenseWordCreateForm.addEventListener("submit", onCreateLicenseWord);
 }
 
 async function onLogin(event) {
@@ -86,9 +99,9 @@ async function loadFamily() {
 }
 
 function render() {
-  el.licenseNotice.hidden = !state.family.has_license;
   el.familyLabel.value = state.family.label;
   el.familyDescription.value = state.family.description || "";
+  renderLicensePanel();
   renderGroups();
   renderArticles();
   renderRules();
@@ -105,6 +118,231 @@ async function onSaveFamily(event) {
     })
   );
   await loadFamily();
+}
+
+// --- Licences (mots/bits, HDR et SATCORE — pas CRT, voir NO_LICENSE_WORDS_FAMILY) -------
+
+function renderLicensePanel() {
+  if (!state.family.has_license) {
+    el.licensePanel.hidden = true;
+    return;
+  }
+  el.licensePanel.hidden = false;
+
+  const isCrt = state.familyCode === NO_LICENSE_WORDS_FAMILY;
+  el.licenseCrtNotice.hidden = !isCrt;
+  el.licenseWordAdd.hidden = isCrt;
+
+  el.licenseWordsList.innerHTML = "";
+  for (const word of state.family.license_words) {
+    el.licenseWordsList.appendChild(renderLicenseWord(word));
+  }
+}
+
+function renderLicenseWord(word) {
+  const box = el_("div", "admin-group");
+
+  const header = el_("div", "admin-group-header");
+  header.appendChild(el_("span", "admin-group-code", word.code));
+  const deleteBtn = el_("button", "danger", "Supprimer le mot");
+  deleteBtn.type = "button";
+  deleteBtn.addEventListener("click", () => onDeleteLicenseWord(word));
+  header.appendChild(deleteBtn);
+  box.appendChild(header);
+
+  const form = document.createElement("form");
+  form.appendChild(labeledInput("Libellé", "text", word.label, (v) => (word._label = v)));
+  const saveBtn = el_("button", null, "Enregistrer le mot");
+  saveBtn.type = "submit";
+  form.appendChild(saveBtn);
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    onSaveLicenseWord(word);
+  });
+  box.appendChild(form);
+
+  for (const bit of word.bits) {
+    box.appendChild(renderLicenseBitRow(word, bit));
+  }
+  box.appendChild(renderLicenseBitCreateForm(word));
+
+  return box;
+}
+
+async function onSaveLicenseWord(word) {
+  await runOrAlert(() =>
+    adminApi.updateLicenseWord(word.id, {
+      label: word._label ?? word.label,
+      position: word.position,
+    })
+  );
+  await loadFamily();
+}
+
+async function onDeleteLicenseWord(word) {
+  if (!confirm(`Supprimer le mot de licence « ${word.label} » et tous ses bits ?`)) return;
+  await runOrAlert(() => adminApi.deleteLicenseWord(word.id));
+  await loadFamily();
+}
+
+async function onCreateLicenseWord(event) {
+  event.preventDefault();
+  await runOrAlert(() =>
+    adminApi.createLicenseWord({
+      family_code: state.familyCode,
+      code: document.getElementById("new-word-code").value,
+      label: document.getElementById("new-word-label").value,
+      position: state.family.license_words.length,
+    })
+  );
+  event.target.reset();
+  await loadFamily();
+}
+
+// Un bit est soit piloté par une ou plusieurs options (OU), soit figé (VRAI/FAUX constant,
+// ex. les bits toujours inclus de SATCORE), soit non calculable (raison expliquée plutôt
+// que compté silencieusement à 0) — jamais deux à la fois, voir LicenseBit dans models.py.
+function bitMode(bit) {
+  if (bit.constant_value === true) return "constant_true";
+  if (bit.constant_value === false) return "constant_false";
+  if (bit.unmapped_reason) return "unmapped";
+  return "options";
+}
+
+function renderLicenseBitRow(word, bit) {
+  const row = el_("div", "admin-group");
+  row.style.marginLeft = "1.5rem";
+
+  const header = el_("div", "admin-group-header");
+  header.appendChild(el_("span", "admin-group-code", `D${bit.position} — poids ${bit.weight}`));
+  const deleteBtn = el_("button", "danger", "Supprimer");
+  deleteBtn.type = "button";
+  deleteBtn.addEventListener("click", () => onDeleteLicenseBit(bit));
+  header.appendChild(deleteBtn);
+  row.appendChild(header);
+
+  const form = document.createElement("form");
+  const fields = {};
+  fields.position = numberInput("Position (Dn)", bit.position);
+  fields.weight = numberInput("Poids", bit.weight);
+  fields.label = textInput("Libellé", bit.label);
+  fields.sourceCell = textInput("Cellule source (classeur)", bit.source_cell || "");
+  form.appendChild(fields.position.label);
+  form.appendChild(fields.weight.label);
+  form.appendChild(fields.label.label);
+  form.appendChild(fields.sourceCell.label);
+
+  const modeSelect = document.createElement("select");
+  for (const [value, text] of [
+    ["options", "Piloté par une ou plusieurs options (OU)"],
+    ["constant_true", "Toujours VRAI (constante)"],
+    ["constant_false", "Toujours FAUX (constante)"],
+    ["unmapped", "Non calculable (raison à expliquer)"],
+  ]) {
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = text;
+    modeSelect.appendChild(opt);
+  }
+  modeSelect.value = bitMode(bit);
+  form.appendChild(wrapLabel("Mode", modeSelect));
+
+  const optionsContainer = el_("div", "admin-checkboxes");
+  renderOptionCheckboxes(optionsContainer, bit.option_ids, licenseOptions());
+  const reasonInput = textInput("Raison (non calculable)", bit.unmapped_reason || "");
+
+  function syncMode() {
+    optionsContainer.hidden = modeSelect.value !== "options";
+    reasonInput.label.hidden = modeSelect.value !== "unmapped";
+  }
+  modeSelect.addEventListener("change", syncMode);
+  syncMode();
+
+  form.appendChild(optionsContainer);
+  form.appendChild(reasonInput.label);
+
+  const saveBtn = el_("button", null, "Enregistrer le bit");
+  saveBtn.type = "submit";
+  form.appendChild(saveBtn);
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const mode = modeSelect.value;
+    onSaveLicenseBit(bit, {
+      position: Number(fields.position.input.value),
+      weight: Number(fields.weight.input.value),
+      label: fields.label.input.value,
+      source_cell: fields.sourceCell.input.value || null,
+      constant_value: mode === "constant_true" ? true : mode === "constant_false" ? false : null,
+      unmapped_reason: mode === "unmapped" ? reasonInput.input.value || null : null,
+      option_ids: mode === "options" ? checkedIds(optionsContainer) : [],
+    });
+  });
+  row.appendChild(form);
+
+  return row;
+}
+
+function numberInput(labelText, value) {
+  const input = document.createElement("input");
+  input.type = "number";
+  input.value = value;
+  return { label: wrapLabel(labelText, input), input };
+}
+
+function textInput(labelText, value) {
+  const input = document.createElement("input");
+  input.type = "text";
+  input.value = value;
+  return { label: wrapLabel(labelText, input), input };
+}
+
+async function onSaveLicenseBit(bit, payload) {
+  await runOrAlert(() => adminApi.updateLicenseBit(bit.id, payload));
+  await loadFamily();
+}
+
+async function onDeleteLicenseBit(bit) {
+  if (!confirm(`Supprimer le bit « ${bit.label} » ?`)) return;
+  await runOrAlert(() => adminApi.deleteLicenseBit(bit.id));
+  await loadFamily();
+}
+
+function renderLicenseBitCreateForm(word) {
+  const details = document.createElement("details");
+  details.className = "admin-add";
+  details.appendChild(el_("summary", null, "Ajouter un bit à ce mot"));
+
+  const form = document.createElement("form");
+  const position = numberInput("Position (Dn)", word.bits.length);
+  const label = textInput("Libellé", "");
+  form.appendChild(position.label);
+  form.appendChild(label.label);
+
+  const optionsContainer = el_("div", "admin-checkboxes");
+  renderOptionCheckboxes(optionsContainer, [], licenseOptions());
+  form.appendChild(optionsContainer);
+
+  const submit = el_("button", null, "Créer");
+  submit.type = "submit";
+  form.appendChild(submit);
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const pos = Number(position.input.value);
+    await runOrAlert(() =>
+      adminApi.createLicenseBit({
+        word_id: word.id,
+        position: pos,
+        weight: 2 ** pos,
+        label: label.input.value,
+        option_ids: checkedIds(optionsContainer),
+      })
+    );
+    await loadFamily();
+  });
+
+  details.appendChild(form);
+  return details;
 }
 
 // --- Groupes et options --------------------------------------------------------------------
@@ -365,10 +603,10 @@ function wrapCell(inputEl) {
   return cell;
 }
 
-function renderOptionCheckboxes(container, checkedOptionIds) {
+function renderOptionCheckboxes(container, checkedOptionIds, options = gridOptions()) {
   container.innerHTML = "";
   const checked = new Set(checkedOptionIds);
-  for (const option of gridOptions()) {
+  for (const option of options) {
     const label = document.createElement("label");
     const input = document.createElement("input");
     input.type = "checkbox";

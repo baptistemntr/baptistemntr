@@ -134,8 +134,11 @@ Ouvrir http://localhost:5500 (le backend doit tourner sur le port 8010). Détail
 - [ ] Arbitrage des 129 anomalies héritées avec l'IMI
 - [x] Écran d'administration IMI : `/admin.html`, protégé par mot de passe
   (`ADMIN_PASSWORD`), les 19 gammes éditables — libellés commerciaux (répond au point
-  ci-dessous), grille et règles de compatibilité. Licences et création de gamme hors
-  périmètre — voir `docs/06-admin-imi.md`.
+  ci-dessous), grille, règles de compatibilité, et mots/bits de licence HDR/SATCORE.
+  Création de gamme et licence CRT (codée en dur, pas en base) hors périmètre — voir
+  `docs/06-admin-imi.md`. Confirmé par recherche Snowflake : rien à synchroniser
+  automatiquement depuis Agile pour les valeurs de licence (dépendent de la config
+  commandée, pas un attribut fixe d'article).
 - [ ] Libellés de groupe commerciaux (certains affichent encore le `GroupName` technique du
   classeur, ex. `CRT_options_panneau`) — éditables dès aujourd'hui via l'écran d'admin, à
   passer en revue avec l'IMI

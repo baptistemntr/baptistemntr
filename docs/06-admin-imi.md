@@ -1,6 +1,7 @@
 # Espace IMI (administration)
 
-> Toutes les gammes sont éditables. Pas de licences (mots/bits), pas de création de gamme.
+> Toutes les gammes sont éditables, y compris les mots/bits de licence de HDR et SATCORE.
+> Pas de création de gamme, pas d'édition de la licence CRT (codée en dur, pas en base).
 > Voir `docs/02-architecture.md` § 2 pour la place de cet espace dans l'architecture
 > générale.
 
@@ -22,8 +23,9 @@ liste désormais les 19 gammes, dans le même ordre que l'espace commercial.
 | Libellé et description de la gamme | Création d'une nouvelle gamme |
 | Groupes d'options (libellé, section, aide) | `OptionGroup.code` après création |
 | Options (libellé, définition technique) | `Option.caption` après création |
-| Grille (créer/modifier/supprimer une ligne) | Mots et bits de licence (DEM, DEMLI…) |
-| Règles de compatibilité (créer/supprimer) | Modification d'une règle existante (recréer) |
+| Grille (créer/modifier/supprimer une ligne) | Modification d'une règle existante (recréer) |
+| Règles de compatibilité (créer/supprimer) | Licence CRT (codée en dur, voir plus bas) |
+| Mots/bits de licence HDR et SATCORE | |
 
 Deux champs sont volontairement figés après création : `OptionGroup.code` et
 `Option.caption`. Le second est la clé qui relie une option à sa colonne de grille
@@ -33,9 +35,31 @@ documenté pour le classeur Excel lui-même. Le libellé commercial (`Option.lab
 s'édite librement — c'est le point réellement demandé (vocabulaire technique du classeur,
 ex. `CRT_options_panneau`, cf. README).
 
-Les gammes à licence (CRT, HDR, SATCORE) restent éditables pour tout le reste (groupes,
-options, grille, règles) : un bandeau d'avertissement le rappelle simplement dans l'écran
-(`#license-notice`).
+### Licences (mots/bits)
+
+HDR et SATCORE stockent leur licence en base (`LicenseWord`/`LicenseBit`, la même somme
+pondérée que documentée dans `docs/04-regles-du-classeur.md` § 4) : l'onglet « Licences »
+de l'écran gamme permet d'y créer/modifier/supprimer un mot et ses bits. Chaque bit a un
+« mode » exclusif :
+
+- **piloté par une ou plusieurs options** (OU entre elles, ex. « Viterbi ou Stacked
+  Viterbi ») ;
+- **constante figée** (VRAI ou FAUX, indépendante de la configuration — la plupart des
+  bits SATCORE) ;
+- **non calculable**, avec une raison à expliquer (ex. dépend d'un compteur numérique non
+  modélisé) plutôt que d'être compté silencieusement à 0.
+
+**CRT (FEP) n'est pas éditable ici** : sa licence est calculée directement dans
+`resolver.build_fep_license`, pas via des `LicenseWord`/`LicenseBit` en base — c'est une
+table de fonctions et de compteurs matériels, pas une somme pondérée comme HDR/SATCORE
+(voir `docs/04-regles-du-classeur.md` § 4). Créer un mot de licence pour CRT dans cet écran
+est refusé côté API (422) : il ne serait jamais lu.
+
+**Vérifié empiriquement (recherche Snowflake) qu'il n'y a rien à synchroniser depuis
+Agile** pour les valeurs de licence : Agile connaît les numéros de dongle en tant
+qu'articles catalogue (`S157786`/`S157787` pour CRT, déjà utilisés dans
+`build_fep_license`), mais pas la clé calculée elle-même — elle dépend de la configuration
+précise commandée, pas d'un attribut fixe d'un article.
 
 ## Authentification
 
