@@ -83,6 +83,25 @@ REV_RELEASE_TYPE_QUERY = """
     ORDER BY r.LATEST_FLAG DESC
 """
 
+# Sur S128362, la jointure LISTENTRY (n'importe quelle langue) n'a rien donné pour
+# RELEASE_TYPE=2472980/2472981 : à vérifier si ces ENTRYID existent seulement sous une autre
+# langue, ou pas du tout dans LISTENTRY (auquel cas RELEASE_TYPE référence autre chose).
+RELEASE_TYPE_RAW_QUERY = """
+    SELECT * FROM LISTENTRY WHERE ENTRYID IN (2472980, 2472981)
+"""
+
+# Hypothèse alternative : le cycle de vie vient du processus de changement (ECO), pas d'une
+# liste sur REV. ITEM.LATEST_RELEASED_ECO/DEFAULT_CHANGE pointent potentiellement vers
+# CHANGE, dont STATUS/STATUSTYPE (trouvés par --list-lifecycle-columns) portent un état.
+CHANGE_LOOKUP_QUERY = """
+    SELECT i.LATEST_RELEASED_ECO, i.DEFAULT_CHANGE,
+           c.STATUS, c.STATUSTYPE, ls.ENTRYVALUE AS STATUSTYPE_LABEL
+    FROM ITEM i
+    LEFT JOIN CHANGE c ON c.ID = i.LATEST_RELEASED_ECO
+    LEFT JOIN LISTENTRY ls ON ls.ENTRYID = c.STATUSTYPE AND ls.LANGID = 3
+    WHERE i.ITEM_NUMBER = '{item_number}'
+"""
+
 # af.ID seul n'est pas une clé fiable : sans le filtre de classe, la jointure ramène des
 # attributs d'objets sans rapport (BOM, étiquettes...) dont l'ID numérique coïncide avec
 # celui de l'article. Vérifié en conditions réelles sur S110647.
@@ -211,6 +230,12 @@ def main() -> None:
         help="Cherche les colonnes du schéma AGILE dont le nom évoque un cycle de vie "
              "(Article.lifecycle n'est rempli par aucune requête existante).",
     )
+    parser.add_argument(
+        "--probe-lifecycle",
+        help="Sur l'article donné : vérifie si RELEASE_TYPE existe dans LISTENTRY (toute "
+             "langue), et si ITEM.LATEST_RELEASED_ECO/DEFAULT_CHANGE mène à un statut via "
+             "CHANGE — deux hypothèses concurrentes après l'échec de la jointure LANGID=3.",
+    )
     args = parser.parse_args()
 
     if not os.getenv("SNOWFLAKE_USER"):
@@ -227,6 +252,12 @@ def main() -> None:
             return
         if args.list_lifecycle_columns:
             show("Colonnes évoquant un cycle de vie", fetch_all(conn, LIFECYCLE_COLUMNS_QUERY))
+            return
+        if args.probe_lifecycle:
+            show("LISTENTRY pour ENTRYID 2472980/2472981 (toute langue)",
+                 fetch_all(conn, RELEASE_TYPE_RAW_QUERY))
+            show(f"CHANGE lié à {args.probe_lifecycle} via LATEST_RELEASED_ECO/DEFAULT_CHANGE",
+                 fetch_all(conn, CHANGE_LOOKUP_QUERY, item_number=args.probe_lifecycle))
             return
         if args.find_text:
             query, verb = (FIND_EXACT_QUERY, "égal à") if args.exact else (FIND_TEXT_QUERY, "contenant")
