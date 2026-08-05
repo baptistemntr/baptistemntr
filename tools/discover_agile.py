@@ -68,6 +68,21 @@ REV_LOOKUP_QUERY = """
     ORDER BY r.LATEST_FLAG DESC
 """
 
+# RELEASE_TYPE/OLD_RELEASE_TYPE ressemblent à des ENTRYID (même système que
+# CATEGORY/PRODUCT_LINES sur ITEM) : un code numérique qui pointe vers LISTENTRY pour un
+# libellé humain (« Production », « Obsolète »...) plutôt qu'une valeur directement lisible.
+REV_RELEASE_TYPE_QUERY = """
+    SELECT r.REV_NUMBER, r.LATEST_FLAG, r.RELEASED, r.RELEASE_DATE,
+           r.RELEASE_TYPE, le_rt.ENTRYVALUE AS RELEASE_TYPE_LABEL,
+           r.OLD_RELEASE_TYPE, le_ort.ENTRYVALUE AS OLD_RELEASE_TYPE_LABEL
+    FROM REV r
+    JOIN ITEM i ON i.ID = r.ITEM
+    LEFT JOIN LISTENTRY le_rt ON le_rt.ENTRYID = r.RELEASE_TYPE AND le_rt.LANGID = 3
+    LEFT JOIN LISTENTRY le_ort ON le_ort.ENTRYID = r.OLD_RELEASE_TYPE AND le_ort.LANGID = 3
+    WHERE i.ITEM_NUMBER = '{item_number}'
+    ORDER BY r.LATEST_FLAG DESC
+"""
+
 # af.ID seul n'est pas une clé fiable : sans le filtre de classe, la jointure ramène des
 # attributs d'objets sans rapport (BOM, étiquettes...) dont l'ID numérique coïncide avec
 # celui de l'article. Vérifié en conditions réelles sur S110647.
@@ -225,6 +240,8 @@ def main() -> None:
                  fetch_all(conn, ITEM_LOOKUP_QUERY, item_number=args.item_number))
             show(f"Révisions REV de {args.item_number} (colonnes TEXTxx)",
                  fetch_all(conn, REV_LOOKUP_QUERY, item_number=args.item_number))
+            show(f"RELEASE_TYPE / OLD_RELEASE_TYPE de {args.item_number} (libellés LISTENTRY)",
+                 fetch_all(conn, REV_RELEASE_TYPE_QUERY, item_number=args.item_number))
             show(
                 f"Attributs AGILE_FLEX de {args.item_number} (toutes révisions)",
                 fetch_all(conn, FLEX_FOR_ITEM_QUERY, item_number=args.item_number),
