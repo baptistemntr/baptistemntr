@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 """Exploration du schéma Agile dans Snowflake.
 
-Sert à répondre à deux questions ouvertes du cadrage :
+Sert à répondre à des questions ouvertes du cadrage :
 
 1. Quel attribut `AGILE_FLEX` porte la **référence commerciale** d'un article ?
+   (`--find-text`, `--exact`) — en pause, voir docs/01-contexte-et-besoin.md.
 2. Quelle colonne / table porte le **cycle de vie** (« en production ») ?
+   (`--list-lifecycle-columns`) — `Article.lifecycle` n'est rempli par aucune requête
+   existante aujourd'hui.
+3. La jointure CATEGORY/PRODUCT_LINES d'`agile_sync.ARTICLES_QUERY` renvoie-t-elle des
+   libellés sensés, ou `NULL` silencieux partout ? (`--preview-sync`) — à vérifier avant
+   tout premier `POST /api/sync` réel.
 
     python3 tools/discover_agile.py --item-number S1234567
 
@@ -111,6 +117,39 @@ SAMPLE_ITEMS_QUERY = """
     LIMIT 10
 """
 
+# Reprend exactement la jointure d'agile_sync.ARTICLES_QUERY, mais en gardant les colonnes
+# brutes (CATEGORY, PRODUCT_LINES) à côté du libellé joint : sans ça, une jointure qui ne
+# matche jamais rend juste NULL partout, silencieusement — rien ne le distingue d'une vraie
+# absence de catégorie. Jamais vérifié sur de vraies données avant ce tour.
+SYNC_PREVIEW_QUERY = """
+    SELECT
+        i.ITEM_NUMBER, i.DESCRIPTION,
+        i.CATEGORY, le_cat.ENTRYVALUE AS CATEGORY_LABEL,
+        i.PRODUCT_LINES, le_pl.ENTRYVALUE AS PRODUCT_LINE_LABEL
+    FROM ITEM i
+    LEFT JOIN LISTENTRY le_cat
+           ON le_cat.ENTRYID = i.CATEGORY AND le_cat.LANGID = 3
+    LEFT JOIN LISTENTRY le_pl
+           ON le_pl.ENTRYID = TRY_CAST(SPLIT_PART(i.PRODUCT_LINES, ',', 2) AS NUMBER)
+          AND le_pl.LANGID = 3
+    WHERE i.CLASS = 10000
+      AND (i.DELETE_FLAG IS NULL OR i.DELETE_FLAG != 1)
+    LIMIT 15
+"""
+
+# `Article.lifecycle` (models.py) n'est rempli par aucune requête existante — jamais
+# implémenté. Cherche toute colonne du schéma AGILE dont le nom évoque un statut de cycle
+# de vie, candidate pour combler ce champ.
+LIFECYCLE_COLUMNS_QUERY = """
+    SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'AGILE'
+      AND (COLUMN_NAME ILIKE '%LIFECYCLE%' OR COLUMN_NAME ILIKE '%STATUS%'
+           OR COLUMN_NAME ILIKE '%PHASE%' OR COLUMN_NAME ILIKE '%STATE%'
+           OR COLUMN_NAME ILIKE '%RELEASE%')
+    ORDER BY TABLE_NAME, COLUMN_NAME
+"""
+
 
 def show(title: str, rows: list[dict]) -> None:
     print(f"\n=== {title} ===")
@@ -142,6 +181,17 @@ def main() -> None:
         help="Liste toutes les tables du schéma AGILE portant une colonne liée à ATTID "
              "(candidates pour la table de définition des attributs)",
     )
+    parser.add_argument(
+        "--preview-sync", action="store_true",
+        help="Rejoue la jointure CATEGORY/PRODUCT_LINES d'agile_sync.ARTICLES_QUERY sur "
+             "15 articles, colonnes brutes et libellés joints côte à côte — à vérifier "
+             "avant de lancer POST /api/sync pour de vrai.",
+    )
+    parser.add_argument(
+        "--list-lifecycle-columns", action="store_true",
+        help="Cherche les colonnes du schéma AGILE dont le nom évoque un cycle de vie "
+             "(Article.lifecycle n'est rempli par aucune requête existante).",
+    )
     args = parser.parse_args()
 
     if not os.getenv("SNOWFLAKE_USER"):
@@ -151,6 +201,13 @@ def main() -> None:
     try:
         if args.list_attid_tables:
             show("Tables avec une colonne liée à ATTID", fetch_all(conn, TABLES_WITH_ATTID_QUERY))
+            return
+        if args.preview_sync:
+            show("Aperçu de la jointure CATEGORY/PRODUCT_LINES (agile_sync.ARTICLES_QUERY)",
+                 fetch_all(conn, SYNC_PREVIEW_QUERY))
+            return
+        if args.list_lifecycle_columns:
+            show("Colonnes évoquant un cycle de vie", fetch_all(conn, LIFECYCLE_COLUMNS_QUERY))
             return
         if args.find_text:
             query, verb = (FIND_EXACT_QUERY, "égal à") if args.exact else (FIND_TEXT_QUERY, "contenant")
