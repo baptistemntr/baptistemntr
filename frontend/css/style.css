@@ -294,7 +294,7 @@ body {
 .export-logo {
   height: 2.6rem;
   width: auto;
-  /* Remplacer par le logo Safran officiel : frontend/img/safran-logo.png. Sans ce fichier,
+  /* Remplacer par le logo Safran officiel : frontend/img/safran-logo.jpg. Sans ce fichier,
      l'image se masque elle-même (onerror, index.html) et seul le nom de marque en texte
      ci-dessous reste — jamais d'icône d'image cassée sur un document professionnel. */
 }
