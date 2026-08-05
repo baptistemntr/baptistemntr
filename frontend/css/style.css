@@ -151,6 +151,14 @@ body {
   opacity: 0.75;
 }
 
+.admin-link {
+  text-align: right;
+  margin: 0.3rem 1.5rem;
+  font-size: 0.8rem;
+}
+
+.admin-link a { color: var(--color-text-muted); }
+
 /* --- Configurateur --- */
 
 .configurator {

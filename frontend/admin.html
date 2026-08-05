@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catalogue Industriel — Espace IMI</title>
+<link rel="stylesheet" href="css/style.css?v=3">
+<link rel="stylesheet" href="css/admin.css?v=1">
+</head>
+<body>
+
+<header class="admin-header">
+  <h1>Espace IMI</h1>
+  <span class="admin-scope">Gamme pilote : DTR — <a href="index.html">retour à l'espace commercial</a></span>
+</header>
+
+<section id="login-panel" class="admin-panel">
+  <p>Cet espace modifie ce que voient les commerciaux. Mot de passe requis.</p>
+  <form id="login-form">
+    <input type="password" id="login-password" placeholder="Mot de passe" autocomplete="current-password" required>
+    <button type="submit">Entrer</button>
+  </form>
+  <div id="login-error" class="message message-error" hidden></div>
+</section>
+
+<main id="admin-content" hidden>
+
+  <section class="admin-panel">
+    <h2>Gamme</h2>
+    <form id="family-form">
+      <label>Libellé <input type="text" id="family-label" required></label>
+      <label>Description <textarea id="family-description" rows="2"></textarea></label>
+      <button type="submit">Enregistrer</button>
+    </form>
+  </section>
+
+  <section class="admin-panel">
+    <h2>Groupes d'options</h2>
+    <div id="groups-list"></div>
+    <details class="admin-add">
+      <summary>Ajouter un groupe</summary>
+      <form id="group-create-form">
+        <label>Code technique (fixe une fois créé) <input type="text" id="new-group-code" required></label>
+        <label>Libellé <input type="text" id="new-group-label" required></label>
+        <label>Section <input type="text" id="new-group-section"></label>
+        <label>Sélection
+          <select id="new-group-selection">
+            <option value="single">single (boutons radio)</option>
+            <option value="boolean">boolean (case à cocher)</option>
+          </select>
+        </label>
+        <button type="submit">Créer</button>
+      </form>
+    </details>
+  </section>
+
+  <section class="admin-panel">
+    <h2>Grille (article ↔ combinaison d'options)</h2>
+    <table id="articles-table" class="admin-table">
+      <thead>
+        <tr>
+          <th>Code article Agile</th>
+          <th>Désignation</th>
+          <th>Référence commerciale</th>
+          <th>Prix standard</th>
+          <th>Options</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="articles-body"></tbody>
+    </table>
+    <details class="admin-add">
+      <summary>Ajouter une ligne de grille</summary>
+      <form id="article-create-form">
+        <label>Code article Agile <input type="text" id="new-article-item"></label>
+        <label>Désignation <input type="text" id="new-article-designation"></label>
+        <label>Référence commerciale <input type="text" id="new-article-ref"></label>
+        <label>Prix standard <input type="number" step="0.01" id="new-article-price"></label>
+        <fieldset id="new-article-options"><legend>Options embarquées</legend></fieldset>
+        <button type="submit">Créer</button>
+      </form>
+    </details>
+  </section>
+
+  <section class="admin-panel">
+    <h2>Règles de compatibilité</h2>
+    <table class="admin-table">
+      <thead>
+        <tr><th>Si</th><th>Alors</th><th>Cible</th><th>Message</th><th></th></tr>
+      </thead>
+      <tbody id="rules-body"></tbody>
+    </table>
+    <details class="admin-add">
+      <summary>Ajouter une règle</summary>
+      <form id="rule-create-form">
+        <label>Option source <select id="new-rule-source"></select></label>
+        <label>Relation
+          <select id="new-rule-kind">
+            <option value="requires">nécessite</option>
+            <option value="excludes">exclut</option>
+          </select>
+        </label>
+        <label>Option cible <select id="new-rule-target"></select></label>
+        <label>Message (optionnel — sinon message par défaut) <input type="text" id="new-rule-message"></label>
+        <button type="submit">Créer</button>
+      </form>
+    </details>
+  </section>
+
+</main>
+
+<script src="js/api.js?v=2"></script>
+<script src="js/admin-api.js?v=1"></script>
+<script src="js/admin.js?v=1"></script>
+</body>
+</html>

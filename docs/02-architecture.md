@@ -54,8 +54,10 @@ Deux espaces :
 
 - **Espace commercial** : sélection de la gamme, configuration guidée, récapitulatif
   permanent en haut d'écran, infobulles sur chaque terme, export de la fiche client.
-- **Espace IMI** : administration des gammes, options, textes d'aide, grille de croix et
-  règles de licence — l'équivalent des onglets « settings », mais sans formule cachée.
+- **Espace IMI** (`/admin.html`) : administration des gammes, options, textes d'aide,
+  grille de croix et règles de licence — l'équivalent des onglets « settings », mais sans
+  formule cachée. V1 restreinte à une gamme pilote, licences hors périmètre — voir
+  `docs/06-admin-imi.md`.
 
 ### `tools/` — Outillage de reprise
 

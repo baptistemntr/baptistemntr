@@ -1,0 +1,120 @@
+/* Espace IMI — vient après style.css, dont il réutilise les variables et le fond. */
+
+.admin-header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.9rem 1.5rem;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-header h1 { margin: 0; font-size: 1.2rem; }
+
+.admin-scope { color: var(--color-text-muted); font-size: 0.9rem; }
+.admin-scope a { color: var(--color-primary); }
+
+.admin-panel {
+  max-width: 900px;
+  margin: 1.2rem auto;
+  padding: 1rem 1.5rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.admin-panel h2 { margin-top: 0; font-size: 1.05rem; }
+
+.admin-panel form label {
+  display: block;
+  margin-bottom: 0.6rem;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.admin-panel form input,
+.admin-panel form select,
+.admin-panel form textarea {
+  display: block;
+  width: 100%;
+  margin-top: 0.2rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font: inherit;
+  color: var(--color-text);
+}
+
+.admin-panel button {
+  padding: 0.4rem 0.9rem;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--color-primary);
+  color: #fff;
+  cursor: pointer;
+}
+
+.admin-panel button:hover { background: var(--color-primary-dark); }
+
+.admin-panel button.danger { background: var(--color-error-text); }
+
+.admin-add { margin-top: 0.8rem; }
+.admin-add summary { cursor: pointer; color: var(--color-primary); font-size: 0.9rem; }
+.admin-add form { margin-top: 0.6rem; }
+
+.admin-group {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.7rem 0.9rem;
+  margin-bottom: 0.8rem;
+}
+
+.admin-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.admin-group-code {
+  font-family: "Cascadia Code", monospace;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.admin-option-row {
+  display: grid;
+  grid-template-columns: 7rem 1fr 1fr auto;
+  gap: 0.4rem;
+  align-items: center;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.admin-option-row input { padding: 0.3rem 0.4rem; }
+.admin-option-caption { font-family: "Cascadia Code", monospace; color: var(--color-text-muted); }
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.admin-table th, .admin-table td {
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.admin-table input { width: 100%; padding: 0.3rem; }
+
+.admin-checkboxes label {
+  display: inline-block;
+  margin: 0 0.6rem 0.2rem 0;
+  font-size: 0.85rem;
+  color: var(--color-text);
+}
+
+fieldset { border: 1px solid var(--color-border); border-radius: var(--radius); margin-bottom: 0.6rem; }
+legend { font-size: 0.85rem; color: var(--color-text-muted); }

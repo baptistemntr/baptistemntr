@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
 from catalogue import snowflake_client
+from catalogue.admin import router as admin_router
 from catalogue.agile_sync import sync_articles
 from catalogue.database import SessionLocal, init_db
 from catalogue.models import Article, OptionGroup, ProductFamily
@@ -30,6 +31,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(admin_router)
 
 
 @app.on_event("startup")

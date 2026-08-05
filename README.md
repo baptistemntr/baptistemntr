@@ -132,7 +132,11 @@ Ouvrir http://localhost:5500 (le backend doit tourner sur le port 8010). Détail
   Snowflake malgré exploration systématique ; probablement à accès restreint (export
   control). Prochaine étape : demander l'ATTID à un administrateur Agile.
 - [ ] Arbitrage des 129 anomalies héritées avec l'IMI
-- [ ] Libellés de groupe commerciaux (certains affichent encore le `GroupName` technique
-  du classeur, ex. `CRT_options_panneau`) — à valider avec l'IMI, comme pour les options
-- [ ] Écran d'administration IMI
+- [x] Écran d'administration IMI (V1, gamme pilote `DTR`) : `/admin.html`, protégé par mot
+  de passe (`ADMIN_PASSWORD`) — édition des libellés commerciaux (répond au point
+  ci-dessous pour DTR), de la grille et des règles de compatibilité. Licences et création
+  de gamme hors périmètre V1 — voir `docs/06-admin-imi.md`.
+- [ ] Libellés de groupe commerciaux sur les 18 autres gammes (certains affichent encore le
+  `GroupName` technique du classeur, ex. `CRT_options_panneau`) — éditables dès aujourd'hui
+  pour DTR via l'écran d'admin, à généraliser une fois DTR validée avec l'IMI
 - [ ] Export à un autre format que l'impression navigateur
