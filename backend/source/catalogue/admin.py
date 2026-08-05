@@ -2,16 +2,16 @@
 
 Remplace, pour ce qui est couvert, le passage obligé par `tools/import_workbook.py` et le
 classeur Excel — c'est tout l'objet de cet écran (voir docs/02-architecture.md § 2).
-Périmètre V1, volontairement restreint pour valider le modèle avant de généraliser :
+Toutes les gammes sont éditables (voir docs/06-admin-imi.md), avec deux limites :
 
-- une seule gamme pilote (`DTR`, voir docs/06-admin-imi.md) ;
 - pas d'édition des licences (mots/bits) ni création de nouvelle gamme ;
 - `Option.caption` et `OptionGroup.code` ne se fixent qu'à la création : ce sont les clés
   stables dont dépend la résolution (`resolver.signature_of`), les renommer casserait
   silencieusement la grille — voir `docs/04-regles-du-classeur.md` § 3.
 
-Protégé par un mot de passe partagé (HTTP Basic, `ADMIN_PASSWORD`) : c'est un espace
-d'écriture sur ce que voient les commerciaux, pas la configuration en lecture seule.
+Protégé par un mot de passe partagé (`ADMIN_PASSWORD`, en-tête `X-Admin-Password`) : c'est
+un espace d'écriture sur ce que voient les commerciaux, pas la configuration en lecture
+seule.
 """
 
 import os
