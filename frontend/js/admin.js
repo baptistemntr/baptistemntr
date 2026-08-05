@@ -1,15 +1,13 @@
-// Gamme pilote de l'espace IMI (voir admin.py) : volontairement figée en V1 pour valider
-// le modèle avant d'ouvrir les 18 autres gammes à l'édition directe.
-const FAMILY_CODE = "DTR";
-
-const state = { family: null };
+const state = { familyCode: null, family: null };
 
 const el = {
   loginPanel: document.getElementById("login-panel"),
   loginForm: document.getElementById("login-form"),
   loginPassword: document.getElementById("login-password"),
   loginError: document.getElementById("login-error"),
+  familyPicker: document.getElementById("admin-family-picker"),
   content: document.getElementById("admin-content"),
+  licenseNotice: document.getElementById("license-notice"),
   familyForm: document.getElementById("family-form"),
   familyLabel: document.getElementById("family-label"),
   familyDescription: document.getElementById("family-description"),
@@ -52,9 +50,9 @@ async function onLogin(event) {
   setAdminPassword(el.loginPassword.value);
   el.loginError.hidden = true;
   try {
-    await loadFamily();
+    const families = await adminApi.listFamilies();
     el.loginPanel.hidden = true;
-    el.content.hidden = false;
+    renderFamilyPicker(families);
   } catch (error) {
     clearAdminAuth();
     el.loginError.textContent = error.messages ? error.messages.join(" ") : String(error);
@@ -62,12 +60,33 @@ async function onLogin(event) {
   }
 }
 
+function renderFamilyPicker(families) {
+  el.familyPicker.innerHTML = "";
+  el.familyPicker.hidden = false;
+  for (const family of families) {
+    const button = el_("button", null, family.label);
+    button.type = "button";
+    if (family.code === state.familyCode) button.classList.add("active");
+    button.addEventListener("click", () => selectFamily(family.code, button));
+    el.familyPicker.appendChild(button);
+  }
+}
+
+async function selectFamily(code, button) {
+  for (const child of el.familyPicker.children) child.classList.remove("active");
+  if (button) button.classList.add("active");
+  state.familyCode = code;
+  await loadFamily();
+  el.content.hidden = false;
+}
+
 async function loadFamily() {
-  state.family = await adminApi.getFamily(FAMILY_CODE);
+  state.family = await adminApi.getFamily(state.familyCode);
   render();
 }
 
 function render() {
+  el.licenseNotice.hidden = !state.family.has_license;
   el.familyLabel.value = state.family.label;
   el.familyDescription.value = state.family.description || "";
   renderGroups();
@@ -80,7 +99,7 @@ function render() {
 async function onSaveFamily(event) {
   event.preventDefault();
   await runOrAlert(() =>
-    adminApi.updateFamily(FAMILY_CODE, {
+    adminApi.updateFamily(state.familyCode, {
       label: el.familyLabel.value,
       description: el.familyDescription.value || null,
     })
@@ -163,7 +182,7 @@ async function onCreateGroup(event) {
   event.preventDefault();
   await runOrAlert(() =>
     adminApi.createGroup({
-      family_code: FAMILY_CODE,
+      family_code: state.familyCode,
       code: document.getElementById("new-group-code").value,
       label: document.getElementById("new-group-label").value,
       section: document.getElementById("new-group-section").value || null,
@@ -380,7 +399,7 @@ async function onCreateArticle(event) {
   event.preventDefault();
   await runOrAlert(() =>
     adminApi.createArticle({
-      family_code: FAMILY_CODE,
+      family_code: state.familyCode,
       item_number: document.getElementById("new-article-item").value || null,
       designation: document.getElementById("new-article-designation").value || null,
       commercial_ref: document.getElementById("new-article-ref").value || null,
@@ -435,7 +454,7 @@ async function onCreateRule(event) {
   event.preventDefault();
   await runOrAlert(() =>
     adminApi.createRule({
-      family_code: FAMILY_CODE,
+      family_code: state.familyCode,
       kind: document.getElementById("new-rule-kind").value,
       source_option_id: Number(el.newRuleSource.value),
       target_option_id: Number(el.newRuleTarget.value),

@@ -1,23 +1,24 @@
-// Auth HTTP Basic gérée explicitement en JS plutôt que via la boîte de dialogue native du
-// navigateur : plus prévisible (la boîte native ne se déclenche pas de façon fiable sur un
-// fetch()), et permet un formulaire cohérent avec le reste de l'appli. Le mot de passe ne
-// vit qu'en mémoire de page : pas de session persistée, conforme au périmètre V1 (un seul
-// mot de passe partagé, pas de gestion d'utilisateurs).
-let adminAuthHeader = null;
+// En-tête maison plutôt que `Authorization: Basic` : ce dernier fait entrer en jeu la
+// gestion native des identifiants du navigateur (cache par origine, ré-essai automatique)
+// dès qu'un 401 survient, ce qui entre en conflit avec ce formulaire de connexion —
+// reproduit concrètement (un mauvais mot de passe suivi du bon reste bloqué). Le mot de
+// passe ne vit qu'en mémoire de page : pas de session persistée, conforme au périmètre V1
+// (un seul mot de passe partagé, pas de gestion d'utilisateurs).
+let adminPassword = null;
 
 function setAdminPassword(password) {
-  adminAuthHeader = "Basic " + btoa("imi:" + password);
+  adminPassword = password;
 }
 
 function clearAdminAuth() {
-  adminAuthHeader = null;
+  adminPassword = null;
 }
 
 async function adminRequest(path, options = {}) {
-  if (!adminAuthHeader) {
+  if (!adminPassword) {
     throw new ApiError(["Non connecté."], 401);
   }
-  const headers = { ...(options.headers || {}), Authorization: adminAuthHeader };
+  const headers = { ...(options.headers || {}), "X-Admin-Password": adminPassword };
   const response = await fetch(API_BASE + path, { ...options, headers });
 
   if (response.status === 401) {
@@ -36,6 +37,7 @@ async function adminRequest(path, options = {}) {
 }
 
 const adminApi = {
+  listFamilies: () => adminRequest("/api/admin/families"),
   getFamily: (code) => adminRequest(`/api/admin/families/${encodeURIComponent(code)}`),
   updateFamily: (code, payload) =>
     adminRequest(`/api/admin/families/${encodeURIComponent(code)}`, {

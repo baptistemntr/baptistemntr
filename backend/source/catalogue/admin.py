@@ -17,8 +17,7 @@ d'écriture sur ce que voient les commerciaux, pas la configuration en lecture s
 import os
 import secrets
 
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
 from catalogue.database import SessionLocal
@@ -38,12 +37,15 @@ from catalogue.schemas import (
     AdminOptionUpdate,
     AdminRuleCreate,
     AdminRuleOut,
+    FamilyOut,
 )
 
-_security = HTTPBasic()
-
-
-def require_admin(credentials: HTTPBasicCredentials = Depends(_security)) -> None:
+def require_admin(x_admin_password: str | None = Header(default=None)) -> None:
+    # Un en-tête maison plutôt que `Authorization: Basic` : ce dernier fait entrer en jeu
+    # la gestion native des identifiants du navigateur (cache par origine, ré-essai
+    # automatique) dès qu'un 401 survient, ce qui entre en conflit avec le formulaire de
+    # connexion JS — reproduit concrètement (un mauvais mot de passe suivi du bon reste
+    # bloqué). Un en-tête que le navigateur ne reconnaît pas évite tout ça.
     expected = os.getenv("ADMIN_PASSWORD")
     if not expected:
         # Un espace d'écriture sans mot de passe configuré doit rester fermé, pas ouvert
@@ -52,11 +54,8 @@ def require_admin(credentials: HTTPBasicCredentials = Depends(_security)) -> Non
         raise HTTPException(status_code=503, detail="ADMIN_PASSWORD n'est pas configuré.")
     # compare_digest : évite qu'une attaque par mesure de temps ne devine le mot de passe
     # caractère par caractère.
-    if not secrets.compare_digest(credentials.password, expected):
-        raise HTTPException(
-            status_code=401, detail="Mot de passe incorrect.",
-            headers={"WWW-Authenticate": "Basic"},
-        )
+    if not x_admin_password or not secrets.compare_digest(x_admin_password, expected):
+        raise HTTPException(status_code=401, detail="Mot de passe incorrect.")
 
 
 router = APIRouter(prefix="/api/admin", tags=["admin"], dependencies=[Depends(require_admin)])
@@ -120,6 +119,19 @@ def _article_out(mapping: ArticleMapping) -> AdminArticleOut:
         option_ids=[o.id for o in mapping.options],
         captions=sorted(o.caption for o in mapping.options),
     )
+
+
+@router.get("/families", response_model=list[FamilyOut])
+def list_families() -> list[FamilyOut]:
+    """Sert le sélecteur de gamme de l'espace admin — et vérifie le mot de passe au passage
+    (le login n'a pas d'endpoint dédié : c'est le premier appel authentifié qui fait foi).
+    """
+    session = _session()
+    try:
+        families = session.query(ProductFamily).order_by(ProductFamily.position).all()
+        return [FamilyOut.model_validate(f, from_attributes=True) for f in families]
+    finally:
+        session.close()
 
 
 @router.get("/families/{code}", response_model=AdminFamilyDetailOut)

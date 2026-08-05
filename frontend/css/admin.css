@@ -1,5 +1,11 @@
 /* Espace IMI — vient après style.css, dont il réutilise les variables et le fond. */
 
+/* `.family-picker` (style.css) force `display: flex`, qui l'emporte sur le `display: none`
+   implicite de l'attribut `hidden` (spécificité d'attribut < spécificité de classe) : sans
+   ce correctif, le sélecteur de gamme reste visible (vide) avant connexion. Un sélecteur
+   d'ID l'emporte sur la classe, peu importe l'ordre de cascade. */
+#admin-family-picker[hidden] { display: none; }
+
 .admin-header {
   display: flex;
   align-items: baseline;

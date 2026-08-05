@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Catalogue Industriel — Espace IMI</title>
 <link rel="stylesheet" href="css/style.css?v=3">
-<link rel="stylesheet" href="css/admin.css?v=1">
+<link rel="stylesheet" href="css/admin.css?v=2">
 </head>
 <body>
 
 <header class="admin-header">
   <h1>Espace IMI</h1>
-  <span class="admin-scope">Gamme pilote : DTR — <a href="index.html">retour à l'espace commercial</a></span>
+  <span class="admin-scope"><a href="index.html">retour à l'espace commercial</a></span>
 </header>
 
 <section id="login-panel" class="admin-panel">
@@ -23,7 +23,14 @@
   <div id="login-error" class="message message-error" hidden></div>
 </section>
 
+<nav id="admin-family-picker" class="family-picker" aria-label="Choix de la gamme" hidden></nav>
+
 <main id="admin-content" hidden>
+
+  <div id="license-notice" class="message message-warning" hidden>
+    Cette gamme a des licences (DEM, DEMLI…) : elles ne sont pas éditables ici — voir
+    docs/04-regles-du-classeur.md § 4. Le reste (groupes, options, grille, règles) l'est.
+  </div>
 
   <section class="admin-panel">
     <h2>Gamme</h2>
@@ -110,7 +117,7 @@
 </main>
 
 <script src="js/api.js?v=2"></script>
-<script src="js/admin-api.js?v=1"></script>
-<script src="js/admin.js?v=1"></script>
+<script src="js/admin-api.js?v=2"></script>
+<script src="js/admin.js?v=2"></script>
 </body>
 </html>

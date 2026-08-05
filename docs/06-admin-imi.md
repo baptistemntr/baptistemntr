@@ -1,23 +1,23 @@
 # Espace IMI (administration)
 
-> Périmètre V1 : gamme pilote (`DTR`), pas de licences, pas de création de gamme. Voir
-> `docs/02-architecture.md` § 2 pour la place de cet espace dans l'architecture générale.
+> Toutes les gammes sont éditables. Pas de licences (mots/bits), pas de création de gamme.
+> Voir `docs/02-architecture.md` § 2 pour la place de cet espace dans l'architecture
+> générale.
 
-## Pourquoi une gamme pilote
+## Historique : validé d'abord sur une gamme pilote
 
 L'IMI éditait jusqu'ici la configuration via le classeur Excel (croix dans l'onglet
-« Base de données <Gamme> », VBA). L'espace `/admin.html` la remplace par des écrans web,
-mais le risque n'est pas symétrique entre gammes : casser la grille de DTR (3 articles)
-se corrige en quelques minutes ; casser celle de HDR (141 articles, licences) en pleine
-période commerciale ne se corrige pas aussi vite. **DTR sert donc à valider le modèle
-d'édition avant de l'ouvrir aux autres gammes** — le code n'est pas spécifique à DTR
-(`backend/source/catalogue/admin.py` ne connaît aucun nom de gamme), seule
-`frontend/js/admin.js` fixe `FAMILY_CODE = "DTR"`. Ouvrir une autre gamme, une fois DTR
-validée, se fait en changeant cette seule ligne.
+« Base de données <Gamme> », VBA). L'espace `/admin.html` la remplace par des écrans web.
+Le modèle d'édition (backend `admin.py`, jamais spécifique à une gamme) a d'abord été
+validé sur DTR (3 articles, pas de licence — un risque faible en cas d'erreur) avant
+d'ouvrir le sélecteur de gamme à toutes les autres : casser la grille de DTR se corrige en
+minutes, casser celle de HDR (141 articles, licences) en pleine période commerciale
+beaucoup moins vite. Le sélecteur de gamme (`frontend/js/admin.js`, `renderFamilyPicker`)
+liste désormais les 19 gammes, dans le même ordre que l'espace commercial.
 
 ## Ce qui est éditable, et ce qui ne l'est pas
 
-| Éditable | Non éditable (V1) |
+| Éditable | Non éditable |
 |---|---|
 | Libellé et description de la gamme | Création d'une nouvelle gamme |
 | Groupes d'options (libellé, section, aide) | `OptionGroup.code` après création |
@@ -33,28 +33,35 @@ documenté pour le classeur Excel lui-même. Le libellé commercial (`Option.lab
 s'édite librement — c'est le point réellement demandé (vocabulaire technique du classeur,
 ex. `CRT_options_panneau`, cf. README).
 
+Les gammes à licence (CRT, HDR, SATCORE) restent éditables pour tout le reste (groupes,
+options, grille, règles) : un bandeau d'avertissement le rappelle simplement dans l'écran
+(`#license-notice`).
+
 ## Authentification
 
-Mot de passe unique partagé (`ADMIN_PASSWORD` dans `backend/.env`), envoyé en HTTP Basic.
-Pas de gestion d'utilisateurs ni de session persistée : le mot de passe ne vit qu'en
-mémoire de l'onglet (`frontend/js/admin-api.js`), à ressaisir à chaque rechargement de
-page. Sans `ADMIN_PASSWORD` configuré, toute requête vers `/api/admin/*` échoue en 503
-plutôt que de s'ouvrir sans protection.
+Mot de passe unique partagé (`ADMIN_PASSWORD` dans `backend/.env`), envoyé dans un en-tête
+maison (`X-Admin-Password`) plutôt qu'`Authorization: Basic` — ce dernier fait entrer en
+jeu la gestion native des identifiants du navigateur (cache par origine, ré-essai
+automatique) dès qu'un 401 survient, ce qui est entré en conflit avec le formulaire de
+connexion JS lors des tests (un mauvais mot de passe suivi du bon restait bloqué). Pas de
+gestion d'utilisateurs ni de session persistée : le mot de passe ne vit qu'en mémoire de
+l'onglet (`frontend/js/admin-api.js`), à ressaisir à chaque rechargement de page. Sans
+`ADMIN_PASSWORD` configuré, toute requête vers `/api/admin/*` échoue en 503 plutôt que de
+s'ouvrir sans protection. `GET /api/admin/families` sert à la fois le sélecteur de gamme
+et la vérification du mot de passe au login (pas d'endpoint de connexion dédié).
 
 ## Utilisation
 
 1. `backend/.env` : renseigner `ADMIN_PASSWORD`.
 2. Démarrer le serveur normalement (`uvicorn catalogue.server:app`).
-3. Ouvrir `/admin.html` (lien « Espace IMI » à ajouter côté commercial si besoin, ou URL
-   directe), saisir le mot de passe.
+3. Ouvrir `/admin.html` (lien « Espace IMI » depuis l'espace commercial), saisir le mot de
+   passe, choisir une gamme dans le sélecteur.
 4. Chaque section (gamme, groupes/options, grille, règles) a son propre formulaire de
    sauvegarde ; toute modification recharge l'écran depuis l'API pour rester le reflet
    exact de la base.
 
-## Prochaines étapes une fois DTR validée
+## Prochaines étapes
 
-- Ouvrir la sélection de gamme à toutes les gammes (retirer la restriction dans
-  `frontend/js/admin.js`).
-- Édition des mots de licence (HDR, CRT, SATCORE) — hors périmètre V1, structure de
-  données différente pour chacune (voir `docs/04-regles-du-classeur.md` § 4).
+- Édition des mots de licence (HDR, CRT, SATCORE) — hors périmètre, structure de données
+  différente pour chacune (voir `docs/04-regles-du-classeur.md` § 4).
 - Création de gamme complète (aujourd'hui : uniquement via `tools/import_workbook.py`).
