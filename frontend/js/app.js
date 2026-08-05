@@ -22,6 +22,16 @@ const el = {
   tooltipLayer: document.getElementById("tooltip-layer"),
   tooltipText: document.getElementById("tooltip-text"),
   tooltipClose: document.getElementById("tooltip-close"),
+  exportDate: document.getElementById("export-date"),
+  exportFamily: document.getElementById("export-family"),
+  exportDesignation: document.getElementById("export-designation"),
+  exportCommercialRef: document.getElementById("export-commercial-ref"),
+  exportItemNumber: document.getElementById("export-item-number"),
+  exportPrice: document.getElementById("export-price"),
+  exportMessages: document.getElementById("export-messages"),
+  exportConfigTable: document.getElementById("export-config-table"),
+  exportLicenseBlock: document.getElementById("export-license-block"),
+  exportLicense: document.getElementById("export-license"),
 };
 
 function el_(tag, className, text) {
@@ -168,6 +178,7 @@ function renderResult(result) {
 
   renderLicense(result.license);
   renderClosest(result.closest);
+  buildExportSheet(result);
 }
 
 function renderViolations(messages) {
@@ -259,6 +270,132 @@ function renderClosest(closest) {
     );
   }
   el.closest.appendChild(list);
+}
+
+// --- Fiche imprimable (export PDF via Ctrl+P) --------------------------------------------
+//
+// Reconstruite à chaque configuration valide (appelée depuis renderResult), pas seulement
+// au clic sur « Exporter » : la fiche est toujours à jour quand l'impression système
+// s'ouvre, sans dépendre d'un second calcul juste avant impression.
+
+function buildExportSheet(result) {
+  el.exportDate.textContent = new Date().toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" });
+  el.exportFamily.textContent = state.currentFamily ? state.currentFamily.label : "";
+
+  el.exportDesignation.textContent = result.designation || "—";
+  el.exportCommercialRef.textContent = result.commercial_ref || "—";
+  el.exportItemNumber.textContent = result.item_number || "—";
+  el.exportPrice.textContent = formatPrice(result.price);
+
+  el.exportMessages.innerHTML = "";
+  for (const warning of result.warnings || []) {
+    el.exportMessages.appendChild(
+      el_("div", result.found ? "message message-warning" : "message message-error", warning)
+    );
+  }
+
+  buildExportConfigTable();
+  buildExportLicense(result.license);
+}
+
+// Une ligne par groupe où au moins une option est cochée (les groupes vides — « None »,
+// options commerciales non cochées — n'ont rien à montrer sur une fiche de commande) ;
+// une ligne d'en-tête par section, pour retrouver le découpage vu à l'écran.
+function buildExportConfigTable() {
+  el.exportConfigTable.innerHTML = "";
+  if (!state.currentFamily) return;
+
+  let currentSection = null;
+  for (const group of state.currentFamily.groups) {
+    const selected = group.options.filter((o) => state.selectedIds.has(o.id));
+    if (!selected.length) continue;
+
+    const sectionKey = group.section || group.label;
+    if (sectionKey !== currentSection) {
+      currentSection = sectionKey;
+      const sectionRow = el_("tr", "export-section-row");
+      const sectionTh = el_("th", null, sectionKey);
+      sectionTh.colSpan = 2;
+      sectionRow.appendChild(sectionTh);
+      el.exportConfigTable.appendChild(sectionRow);
+    }
+
+    const row = document.createElement("tr");
+    row.appendChild(el_("th", null, group.section ? group.label : ""));
+    const td = document.createElement("td");
+    for (const option of selected) {
+      const line = document.createElement("div");
+      line.textContent = option.label;
+      if (option.technical_label) {
+        line.appendChild(el_("span", "export-option-technical", option.technical_label));
+      }
+      td.appendChild(line);
+    }
+    row.appendChild(td);
+    el.exportConfigTable.appendChild(row);
+  }
+
+  if (!el.exportConfigTable.children.length) {
+    const row = document.createElement("tr");
+    const td = el_("td", null, "Aucune option sélectionnée.");
+    td.colSpan = 2;
+    row.appendChild(td);
+    el.exportConfigTable.appendChild(row);
+  }
+}
+
+function buildExportLicense(license) {
+  el.exportLicense.innerHTML = "";
+  if (!license || Object.keys(license).length === 0) {
+    el.exportLicenseBlock.hidden = true;
+    return;
+  }
+  el.exportLicenseBlock.hidden = false;
+
+  if (license.kind === "fep") {
+    buildExportFepLicense(license);
+    return;
+  }
+
+  const table = el_("table", "export-license-table");
+  const head = document.createElement("tr");
+  head.appendChild(el_("th", null, "Mot"));
+  head.appendChild(el_("th", null, "Valeur"));
+  table.appendChild(head);
+  for (const [code, word] of Object.entries(license)) {
+    const row = document.createElement("tr");
+    row.appendChild(el_("th", null, `${word.label} (${code})`));
+    row.appendChild(el_("td", "export-hex", word.hex));
+    table.appendChild(row);
+  }
+  el.exportLicense.appendChild(table);
+}
+
+// CRT (dongle FEP) : même table que le récapitulatif à l'écran (renderFepLicense), mise en
+// forme pour l'impression plutôt que reconstruite depuis zéro.
+function buildExportFepLicense(license) {
+  const table = el_("table", "export-license-table");
+
+  let row = document.createElement("tr");
+  row.appendChild(el_("th", null, "Dongle FEP"));
+  row.appendChild(el_("td", "export-hex", license.dongle_part_number));
+  table.appendChild(row);
+
+  const active = license.functions.filter((f) => f.active);
+  row = document.createElement("tr");
+  row.appendChild(el_("th", null, "Fonctions actives"));
+  row.appendChild(el_("td", null, active.length ? active.map((f) => f.label).join(", ") : "Aucune"));
+  table.appendChild(row);
+
+  const counters = license.counters.filter((c) => c.count > 0);
+  if (counters.length) {
+    row = document.createElement("tr");
+    row.appendChild(el_("th", null, "Compteurs"));
+    row.appendChild(el_("td", "export-hex", counters.map((c) => `${c.code}=${c.hex}`).join(", ")));
+    table.appendChild(row);
+  }
+
+  el.exportLicense.appendChild(table);
 }
 
 function showTooltip(text) {

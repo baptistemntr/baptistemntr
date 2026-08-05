@@ -267,10 +267,133 @@ body {
 
 .tooltip-text { font-size: 0.95rem; line-height: 1.4; }
 
-/* --- Impression : fiche client --- */
+/* --- Fiche imprimable --- */
+/*
+ * Invisible à l'écran, ne s'affiche qu'à l'impression (@media print ci-dessous) : une mise
+ * en page dédiée plutôt que d'imprimer l'écran de configuration tel quel (colonnes de
+ * cases à cocher, boutons, tout ce qui n'a de sens qu'à l'usage interactif).
+ */
+
+.export-sheet {
+  display: none;
+  max-width: 48rem;
+  margin: 0 auto;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: #1c2430;
+}
+
+.export-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 3px solid var(--color-primary);
+  padding-bottom: 0.7rem;
+  margin-bottom: 1.2rem;
+}
+
+.export-logo {
+  height: 2.6rem;
+  width: auto;
+  /* Remplacer par le logo Safran officiel : frontend/img/safran-logo.png. Sans ce fichier,
+     l'image se masque elle-même (onerror, index.html) et seul le nom de marque en texte
+     ci-dessous reste — jamais d'icône d'image cassée sur un document professionnel. */
+}
+
+.export-header-text { flex: 1; }
+
+.export-brand {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--color-primary);
+}
+
+.export-doc-title {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.export-date {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.export-family {
+  font-size: 1.5rem;
+  margin: 0 0 1.2rem;
+}
+
+.export-block { margin-bottom: 1.4rem; }
+
+.export-block h2 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-primary);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.3rem;
+  margin: 0 0 0.6rem;
+}
+
+.export-summary-table, .export-config-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.export-summary-table th, .export-config-table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  width: 12rem;
+  vertical-align: top;
+  padding: 0.3rem 0.6rem 0.3rem 0;
+}
+
+.export-summary-table td, .export-config-table td {
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.export-config-table .export-section-row th {
+  padding-top: 0.8rem;
+  color: var(--color-primary);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.export-option-technical {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.export-license-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.export-license-table th, .export-license-table td {
+  text-align: left;
+  padding: 0.3rem 0.6rem 0.3rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.export-license-table td.export-hex { font-family: "Cascadia Code", monospace; font-weight: 600; }
+
+.export-footer {
+  margin-top: 2rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
 
 @media print {
-  .family-picker, .configurator, .recap-actions, .info-button { display: none !important; }
-  .recap { position: static; border: none; padding: 0; }
+  .family-picker, .configurator, .recap, .admin-link, .tooltip-layer { display: none !important; }
   body { background: #fff; }
+  .export-sheet { display: block; }
 }

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Catalogue Industriel</title>
-<link rel="stylesheet" href="css/style.css?v=3">
+<link rel="stylesheet" href="css/style.css?v=4">
 </head>
 <body>
 
@@ -54,9 +54,51 @@
   </div>
 </div>
 
+<!-- Fiche imprimable : invisible à l'écran (.export-sheet, style.css), ne s'affiche qu'à
+     l'impression (Ctrl+P → « Enregistrer en PDF »). Reconstruite à chaque changement de
+     configuration (buildExportSheet dans app.js), pas seulement au clic sur « Exporter ». -->
+<div id="export-sheet" class="export-sheet">
+  <header class="export-header">
+    <img src="img/safran-logo.png" alt="Safran" class="export-logo"
+         onerror="this.style.display='none'">
+    <div class="export-header-text">
+      <div class="export-brand">SAFRAN</div>
+      <div class="export-doc-title">Fiche de configuration — Catalogue Industriel</div>
+    </div>
+    <div class="export-date" id="export-date"></div>
+  </header>
+
+  <h1 class="export-family" id="export-family"></h1>
+
+  <section class="export-block">
+    <h2>Article</h2>
+    <table class="export-summary-table">
+      <tr><th>Désignation</th><td id="export-designation">—</td></tr>
+      <tr><th>Référence commerciale</th><td id="export-commercial-ref">—</td></tr>
+      <tr><th>Code article Agile</th><td id="export-item-number">—</td></tr>
+      <tr><th>Prix</th><td id="export-price">—</td></tr>
+    </table>
+    <div id="export-messages"></div>
+  </section>
+
+  <section class="export-block">
+    <h2>Configuration sélectionnée</h2>
+    <table class="export-config-table" id="export-config-table"></table>
+  </section>
+
+  <section class="export-block" id="export-license-block" hidden>
+    <h2>Licence</h2>
+    <div id="export-license"></div>
+  </section>
+
+  <footer class="export-footer">
+    Document généré automatiquement par le configurateur Safran — à valider avant commande.
+  </footer>
+</div>
+
 <!-- Le paramètre ?v= force le navigateur à recharger le fichier au lieu de garder une
      ancienne version en cache : à incrémenter à chaque modification de ces fichiers. -->
 <script src="js/api.js?v=2"></script>
-<script src="js/app.js?v=3"></script>
+<script src="js/app.js?v=4"></script>
 </body>
 </html>
