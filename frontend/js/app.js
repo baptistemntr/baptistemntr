@@ -4,10 +4,22 @@ const state = {
   selectedIds: new Set(),
 };
 
+// Visuel produit dans l'en-tête du configurateur (frontend/img/products/) : seules ces
+// gammes ont une illustration pour l'instant, les autres masquent simplement le cadre
+// (voir updateProductVisual).
+const PRODUCT_IMAGES = {
+  CRT: "img/products/crt.webp",
+  DTR: "img/products/dtr.webp",
+  HDR: "img/products/hdr.webp",
+  SATCORE: "img/products/satcore.webp",
+};
+
 const el = {
   familyPicker: document.getElementById("family-picker"),
   configurator: document.getElementById("configurator"),
   familyTitle: document.getElementById("family-title"),
+  productVisual: document.getElementById("product-visual"),
+  productVisualImg: document.getElementById("product-visual-img"),
   groups: document.getElementById("groups"),
   recapEmpty: document.getElementById("recap-empty"),
   recapContent: document.getElementById("recap-content"),
@@ -85,8 +97,25 @@ async function selectFamily(code, button) {
 
   el.familyTitle.textContent = state.currentFamily.label;
   el.configurator.hidden = false;
+  updateProductVisual(code);
   renderGroups();
   await refreshConfiguration();
+}
+
+// Cadre masqué par défaut (index.html) : on ne le montre qu'une fois l'image chargée avec
+// succès, jamais entre-temps ni en cas d'échec — même logique que le logo Safran (onerror),
+// pour ne jamais laisser une icône d'image cassée à l'écran devant un client.
+function updateProductVisual(code) {
+  const src = PRODUCT_IMAGES[code];
+  if (!src) {
+    el.productVisual.hidden = true;
+    el.productVisualImg.removeAttribute("src");
+    return;
+  }
+  el.productVisualImg.onload = () => { el.productVisual.hidden = false; };
+  el.productVisualImg.onerror = () => { el.productVisual.hidden = true; };
+  el.productVisualImg.alt = state.currentFamily.label;
+  el.productVisualImg.src = src;
 }
 
 function renderGroups() {
