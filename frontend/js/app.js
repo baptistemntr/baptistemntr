@@ -365,12 +365,9 @@ function buildExportConfigTable() {
     row.appendChild(el_("th", null, group.section ? group.label : ""));
     const td = document.createElement("td");
     for (const option of selected) {
-      const line = document.createElement("div");
-      line.textContent = option.label;
-      if (option.technical_label) {
-        line.appendChild(el_("span", "export-option-technical", option.technical_label));
-      }
-      td.appendChild(line);
+      // Même format « technique / commercial » qu'à l'écran (optionText) : le commercial
+      // montre l'écran puis remet la fiche, les deux doivent se lire pareil.
+      td.appendChild(el_("div", null, optionText(option)));
     }
     row.appendChild(td);
     el.exportConfigTable.appendChild(row);
