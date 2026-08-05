@@ -12,6 +12,9 @@ const PRODUCT_IMAGES = {
   DTR: "img/products/dtr.webp",
   HDR: "img/products/hdr.webp",
   SATCORE: "img/products/satcore.webp",
+  RTR: "img/products/rtr.webp",
+  BSS: "img/products/bss.webp",
+  "RSR-RF": "img/products/rsr-rf.webp",
 };
 
 const el = {
