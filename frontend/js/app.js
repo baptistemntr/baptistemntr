@@ -149,6 +149,15 @@ function renderGroups() {
   }
 }
 
+// « C0 / PCC Motherboard + ANA board » : le code technique du classeur suivi de sa
+// définition commerciale (ligne 2 des onglets « Base de données », affichée jusqu'ici
+// seulement au survol dans Excel et derrière le bouton « i » ici).
+function optionText(option) {
+  return option.technical_label
+    ? `${option.label} / ${option.technical_label}`
+    : option.label;
+}
+
 function renderOption(group, option) {
   const row = el_("div", "option-row");
 
@@ -159,7 +168,7 @@ function renderOption(group, option) {
   input.dataset.optionId = String(option.id);
   input.addEventListener("change", onSelectionChange);
 
-  const label = el_("label", null, option.label);
+  const label = el_("label", null, optionText(option));
   label.htmlFor = input.id;
 
   row.appendChild(input);
