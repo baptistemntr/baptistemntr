@@ -53,8 +53,12 @@ ITEM_LOOKUP_QUERY = """
 # REV porte ses propres champs personnalisés en colonnes génériques (TEXT01..15,
 # LIST01..25...), un système distinct d'AGILE_FLEX. La référence commerciale peut être
 # rangée là plutôt que dans AGILE_FLEX — à vérifier en lisant les TEXTxx d'une révision.
+# RELEASED/RELEASE_TYPE/RELEASE_DATE : candidats pour Article.lifecycle (VERSION, trouvé
+# par --list-lifecycle-columns, s'est avéré être du versionnage de pièces jointes/documents
+# — ATTACH_ID, LABEL, REVISION — pas le cycle de vie de l'article ; faux positif écarté).
 REV_LOOKUP_QUERY = """
     SELECT r.ID, r.REV_NUMBER, r.LATEST_FLAG, r.DESCRIPTION,
+           r.RELEASED, r.RELEASE_TYPE, r.OLD_RELEASE_TYPE, r.RELEASE_DATE,
            r.TEXT01, r.TEXT02, r.TEXT03, r.TEXT04, r.TEXT05,
            r.TEXT06, r.TEXT07, r.TEXT08, r.TEXT09, r.TEXT10,
            r.TEXT11, r.TEXT12, r.TEXT13, r.TEXT14, r.TEXT15
