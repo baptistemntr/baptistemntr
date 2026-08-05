@@ -18,6 +18,8 @@ ITEM_CLASS_PART = 10000
 # À renseigner une fois identifié avec tools/discover_agile.py.
 COMMERCIAL_REF_ATTID = os.getenv("AGILE_COMMERCIAL_REF_ATTID", "")
 
+# Jointure vérifiée sur de vraies données (tools/discover_agile.py --preview-sync) : les
+# libellés CATEGORY/PRODUCT_LINE sont correctement résolus, pas de NULL silencieux.
 ARTICLES_QUERY = f"""
     SELECT
         i.ID            AS ITEM_ID,
@@ -75,6 +77,10 @@ def sync_articles() -> dict:
             article.category = row.get("CATEGORY_LABEL")
             article.product_line = row.get("PRODUCT_LINE_LABEL")
             article.commercial_ref = refs.get(str(int(row["ITEM_ID"]))) or article.commercial_ref
+            # article.lifecycle n'est jamais renseigné : trois pistes explorées sans succès
+            # (VERSION.LIFECYCLEPHASE, REV.RELEASE_TYPE, CHANGE.STATUSTYPE — voir
+            # docs/01-contexte-et-besoin.md § 5 et tools/discover_agile.py --probe-lifecycle).
+            # Reste `None` plutôt que d'afficher une valeur devinée.
             article.last_sync = now
         session.commit()
     finally:

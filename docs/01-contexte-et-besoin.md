@@ -99,7 +99,17 @@ Le classeur a été développé **à la main par Tristan en 2019**. Il existe :
       `tools/discover_agile.py`, notamment `--item-number` et `--list-attid-tables`.
       **Prochaine étape recommandée** : demander directement le numéro d'ATTID à un
       administrateur Agile (écran Admin > Classes > Attributs).
-- [ ] Confirmer le critère « produit en production » côté Agile (cycle de vie).
+- [ ] Confirmer le critère « produit en production » côté Agile (cycle de vie),
+      `Article.lifecycle` — jamais rempli par `agile_sync.py`. Trois pistes tentées sans
+      succès (`tools/discover_agile.py --list-lifecycle-columns`, `--probe-lifecycle`) :
+      `VERSION.LIFECYCLEPHASE` s'avère être du versionnage de pièces jointes/documents, pas
+      le cycle de vie de l'article ; `REV.RELEASE_TYPE`/`OLD_RELEASE_TYPE` ressemblent à des
+      `ENTRYID` mais n'existent dans `LISTENTRY` sous aucune langue ; `CHANGE.STATUSTYPE`
+      (via `ITEM.LATEST_RELEASED_ECO`) donne des résultats incohérents (extensions de
+      fichier) — `LISTENTRY.ENTRYID` n'est pas unique globalement, il faudrait connaître la
+      bonne liste (`LISTID`/`LISTNAME`) pour filtrer correctement, ce qu'aucune table
+      accessible ne documente. Même impasse méthodologique que la référence commerciale.
+      **Prochaine étape recommandée** : demander directement à un administrateur Agile.
 - [ ] Rétro-ingénierie exacte de la **formule de clé de licence** (ordre des bits, encodage,
       éventuel checksum) à partir de l'onglet licence.
 - [ ] Périmètre de la V1 : toutes les gammes, ou une seule (HDR, car elle porte aussi les

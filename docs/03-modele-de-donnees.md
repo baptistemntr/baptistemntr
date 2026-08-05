@@ -25,7 +25,7 @@ Alimenté par la synchro Snowflake. Jamais édité à la main.
 | `commercial_ref` | `str?` | `AGILE_FLEX` — attribut à identifier (voir `discover_agile.py`) |
 | `product_line` | `str?` | `LISTENTRY` via `ITEM.PRODUCT_LINES` |
 | `category` | `str?` | `LISTENTRY` via `ITEM.CATEGORY` |
-| `lifecycle` | `str?` | cycle de vie — sert à repérer les articles sortis de production |
+| `lifecycle` | `str?` | cycle de vie — jamais rempli, source Agile introuvable (voir `docs/01-contexte-et-besoin.md` § 5) |
 | `last_sync` | `datetime` | horodatage de la dernière synchro |
 
 ### `product_family` — une gamme
