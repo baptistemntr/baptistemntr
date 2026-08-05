@@ -125,12 +125,19 @@ Ouvrir http://localhost:5500 (le backend doit tourner sur le port 8010). Détail
   seuls 3 dépendent réellement d'une option ; le mot DEMLI est entièrement figé (`0x2E`) —
   voir `docs/04-regles-du-classeur.md` § 4. 4 bits signalés (constantes référencées sans
   contrôle pour les activer, même anomalie que HDR).
+- [x] Synchro Agile réelle exécutée (`POST /api/sync`) : 119 624 articles importés, jointure
+  CATEGORY/PRODUCT_LINES vérifiée sur de vraies données avant le lancement
+  (`tools/discover_agile.py --preview-sync`), avertissement « Article absent du dernier
+  import Agile » confirmé disparu côté commercial pour un article synchronisé.
 - [ ] Correspondance bit → option d'HDR, CRT et SATCORE à rejouer sur une licence réellement
   émise
 - [ ] Identification de l'attribut « référence commerciale » dans Agile — localisé côté UI
   Agile (« Safran Sales Reference », onglet Sales - Export Control), introuvable via
   Snowflake malgré exploration systématique ; probablement à accès restreint (export
   control). Prochaine étape : demander l'ATTID à un administrateur Agile.
+- [ ] Cycle de vie (`Article.lifecycle`) : jamais rempli, trois pistes explorées sans succès
+  (`VERSION.LIFECYCLEPHASE`, `REV.RELEASE_TYPE`, `CHANGE.STATUSTYPE`) — même impasse que la
+  référence commerciale, même recommandation : demander à un administrateur Agile.
 - [ ] Arbitrage des 129 anomalies héritées avec l'IMI
 - [x] Écran d'administration IMI : `/admin.html`, protégé par mot de passe
   (`ADMIN_PASSWORD`), les 19 gammes éditables — libellés commerciaux (répond au point
