@@ -101,7 +101,7 @@ body {
   z-index: 10;
   background:
     linear-gradient(100deg, color-mix(in srgb, var(--color-accent-900) 96%, transparent) 0%, color-mix(in srgb, var(--color-accent-900) 80%, transparent) 55%, color-mix(in srgb, var(--color-accent-900) 92%, transparent) 100%),
-    url("img/hero-facility.jpg") center 30% / cover no-repeat,
+    url("../img/hero-facility.jpg") center 30% / cover no-repeat,
     var(--color-accent-900);
   color: #fff;
   box-shadow: var(--shadow-lg);
