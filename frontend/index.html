@@ -4,9 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Catalogue Industriel</title>
-<link rel="stylesheet" href="css/style.css?v=4">
+<link rel="stylesheet" href="css/style.css?v=5">
 </head>
 <body>
+
+<div class="brandbar">
+  <img src="img/safran-logo.jpg" alt="Safran" class="brandbar-logo" onerror="this.style.display='none'">
+  <div class="brandbar-text">
+    <span class="brandbar-title">Data Systems</span>
+    <span class="brandbar-subtitle">Configurateur produits industriels</span>
+  </div>
+</div>
 
 <header id="recap" class="recap">
   <div class="recap-empty" id="recap-empty">Choisissez une gamme pour commencer une configuration.</div>
@@ -24,7 +32,7 @@
         <span class="recap-label">Code article Agile</span>
         <span class="recap-value" id="recap-item-number">—</span>
       </div>
-      <div class="recap-field">
+      <div class="recap-field recap-field-price">
         <span class="recap-label">Prix</span>
         <span class="recap-value" id="recap-price">—</span>
       </div>
@@ -43,7 +51,10 @@
 <p class="admin-link"><a href="admin.html">Espace IMI</a></p>
 
 <main id="configurator" class="configurator" hidden>
-  <h1 id="family-title"></h1>
+  <div class="configurator-head">
+    <h1 id="family-title"></h1>
+    <div class="product-visual" id="product-visual" hidden><img id="product-visual-img" alt=""></div>
+  </div>
   <div id="groups"></div>
 </main>
 

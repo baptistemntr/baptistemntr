@@ -1,40 +1,47 @@
-/* Espace IMI — vient après style.css, dont il réutilise les variables et le fond. */
+/* Espace IMI — vient après style.css, dont il réutilise les variables et le fond.
+   Même grammaire visuelle (cadres à équerres, Barlow Condensed/Barlow) appliquée à un
+   usage interne : plus dense, plus tabulaire, moins "vitrine". */
 
-/* `.family-picker` (style.css) force `display: flex`, qui l'emporte sur le `display: none`
-   implicite de l'attribut `hidden` (spécificité d'attribut < spécificité de classe) : sans
-   ce correctif, le sélecteur de gamme reste visible (vide) avant connexion. Un sélecteur
-   d'ID l'emporte sur la classe, peu importe l'ordre de cascade. */
 #admin-family-picker[hidden] { display: none; }
 
 .admin-header {
   display: flex;
   align-items: baseline;
-  gap: 1rem;
-  padding: 0.9rem 1.5rem;
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-6);
+  background: var(--color-accent-900);
+  color: #fff;
 }
 
-.admin-header h1 { margin: 0; font-size: 1.2rem; }
+.admin-header h1 { margin: 0; font-size: 1.15rem; color: #fff; }
 
-.admin-scope { color: var(--color-text-muted); font-size: 0.9rem; }
-.admin-scope a { color: var(--color-primary); }
+.admin-scope { color: color-mix(in srgb, #fff 65%, transparent); font-size: 0.85rem; }
+.admin-scope a { color: #fff; }
 
 .admin-panel {
-  max-width: 900px;
-  margin: 1.2rem auto;
-  padding: 1rem 1.5rem;
+  position: relative;
+  max-width: 960px;
+  margin: var(--space-6) auto;
+  padding: var(--space-4) var(--space-6) var(--space-6);
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  border: 1px solid var(--color-divider);
 }
 
-.admin-panel h2 { margin-top: 0; font-size: 1.05rem; }
+.admin-panel h2 {
+  margin: 0 0 var(--space-4);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-accent-800);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-divider);
+}
 
 .admin-panel form label {
   display: block;
-  margin-bottom: 0.6rem;
-  font-size: 0.9rem;
+  margin-bottom: var(--space-3);
+  font-size: 0.85rem;
   color: var(--color-text-muted);
 }
 
@@ -43,47 +50,66 @@
 .admin-panel form textarea {
   display: block;
   width: 100%;
-  margin-top: 0.2rem;
-  padding: 0.4rem 0.5rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  margin-top: 5px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-divider);
+  border-radius: 0;
+  background: var(--color-bg);
   font: inherit;
   color: var(--color-text);
 }
 
+.admin-panel form input:focus-visible,
+.admin-panel form select:focus-visible,
+.admin-panel form textarea:focus-visible { border-color: var(--color-accent); }
+
 .admin-panel button {
-  padding: 0.4rem 0.9rem;
-  border: none;
-  border-radius: var(--radius);
-  background: var(--color-primary);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  padding: 8px 18px;
+  border: 1px solid var(--color-accent);
+  border-radius: 0;
+  background: var(--color-accent);
   color: #fff;
   cursor: pointer;
 }
 
-.admin-panel button:hover { background: var(--color-primary-dark); }
+.admin-panel button:hover { background: var(--color-accent-600); border-color: var(--color-accent-600); }
 
-.admin-panel button.danger { background: var(--color-error-text); }
+.admin-panel button.danger { background: var(--color-error-text); border-color: var(--color-error-text); }
+.admin-panel button.danger:hover { background: color-mix(in srgb, var(--color-error-text) 85%, black); }
 
-.admin-add { margin-top: 0.8rem; }
-.admin-add summary { cursor: pointer; color: var(--color-primary); font-size: 0.9rem; }
-.admin-add form { margin-top: 0.6rem; }
+.admin-add {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px dashed var(--color-divider);
+}
+
+.admin-add summary {
+  cursor: pointer;
+  color: var(--color-accent-800);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.admin-add form { margin-top: var(--space-4); }
 
 .admin-group {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: 0.7rem 0.9rem;
-  margin-bottom: 0.8rem;
+  border: 1px solid var(--color-divider);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-3);
 }
 
 .admin-group-header {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .admin-group-code {
-  font-family: "Cascadia Code", monospace;
+  font-family: var(--font-mono);
   font-size: 0.8rem;
   color: var(--color-text-muted);
 }
@@ -91,14 +117,14 @@
 .admin-option-row {
   display: grid;
   grid-template-columns: 7rem 1fr 1fr auto;
-  gap: 0.4rem;
+  gap: var(--space-2);
   align-items: center;
-  margin-top: 0.5rem;
+  margin-top: var(--space-2);
   font-size: 0.9rem;
 }
 
-.admin-option-row input { padding: 0.3rem 0.4rem; }
-.admin-option-caption { font-family: "Cascadia Code", monospace; color: var(--color-text-muted); }
+.admin-option-row input { padding: 6px 8px; }
+.admin-option-caption { font-family: var(--font-mono); color: var(--color-text-muted); }
 
 .admin-table {
   width: 100%;
@@ -106,21 +132,33 @@
   font-size: 0.88rem;
 }
 
-.admin-table th, .admin-table td {
-  border-bottom: 1px solid var(--color-border);
-  padding: 0.4rem 0.5rem;
+.admin-table th {
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-divider);
+  padding: var(--space-2);
+}
+
+.admin-table td {
+  border-bottom: 1px solid var(--color-divider);
+  padding: 8px var(--space-2);
   text-align: left;
   vertical-align: top;
 }
 
-.admin-table input { width: 100%; padding: 0.3rem; }
+.admin-table tbody tr:hover { background: color-mix(in srgb, var(--color-accent) 6%, transparent); }
+
+.admin-table input { width: 100%; padding: 6px 8px; }
 
 .admin-checkboxes label {
   display: inline-block;
-  margin: 0 0.6rem 0.2rem 0;
+  margin: 0 var(--space-3) var(--space-1) 0;
   font-size: 0.85rem;
   color: var(--color-text);
 }
 
-fieldset { border: 1px solid var(--color-border); border-radius: var(--radius); margin-bottom: 0.6rem; }
-legend { font-size: 0.85rem; color: var(--color-text-muted); }
+fieldset { border: 1px solid var(--color-divider); border-radius: 0; margin-bottom: var(--space-3); padding: var(--space-3); }
+legend { font-size: 0.8rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; }

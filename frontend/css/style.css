@@ -1,339 +1,515 @@
+/* Safran Data Systems — Catalogue Industriel
+   Palette, type et composants dérivés du design system "Industry" (bleu acier, Barlow
+   Condensed / Barlow), poussés vers un rendu commercial : plaque de synthèse sombre,
+   grandes typographies, forte hiérarchie — pensé pour un écran montré au client. */
+
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap');
+
 :root {
-  --color-bg: #f4f5f7;
+  --color-bg: #f2f2f3;
   --color-surface: #ffffff;
-  --color-border: #d8dce1;
-  --color-text: #1c2430;
-  --color-text-muted: #5b6572;
-  --color-primary: #1f4e8c;
-  --color-primary-dark: #163a68;
-  --color-warning-bg: #fff4e5;
-  --color-warning-text: #8a5300;
-  --color-error-bg: #fdecec;
-  --color-error-text: #9c1c1c;
-  --color-success-bg: #e8f4ec;
-  --color-success-text: #1d6b3a;
-  --radius: 6px;
+  --color-text: #1d1f20;
+  --color-text-muted: color-mix(in srgb, #1d1f20 58%, transparent);
+  --color-divider: color-mix(in srgb, #1d1f20 16%, transparent);
+
+  --color-accent: #5980a6;
+  --color-accent-100: #eef6ff;
+  --color-accent-200: #d6ebff;
+  --color-accent-300: #b5d9fd;
+  --color-accent-400: #94bce3;
+  --color-accent-500: #749dc4;
+  --color-accent-600: #597ea3;
+  --color-accent-700: #416180;
+  --color-accent-800: #2c455d;
+  --color-accent-900: #1d2d3d;
+
+  --color-neutral-100: #f5f5f8;
+  --color-neutral-200: #e7e7ea;
+  --color-neutral-300: #d4d4d7;
+  --color-neutral-700: #5d5d60;
+  --color-neutral-800: #424244;
+
+  --color-warning-bg: #f5ecd8;
+  --color-warning-text: #7a4e11;
+  --color-error-bg: #f6dfdf;
+  --color-error-text: #7d2323;
+  --color-success-bg: #dfece1;
+  --color-success-text: #1f5c34;
+
+  --font-heading: "Barlow Condensed", system-ui, sans-serif;
+  --font-body: "Barlow", system-ui, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --shadow-sm: 0 1px 2px color-mix(in srgb, #1d1f20 14%, transparent);
+  --shadow-md: 0 6px 18px color-mix(in srgb, #1d1f20 18%, transparent);
+  --shadow-lg: 0 24px 56px color-mix(in srgb, #1d2d3d 34%, transparent);
 }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-family: var(--font-body);
+  font-size: 16px;
   background: var(--color-bg);
   color: var(--color-text);
 }
 
-/* --- Récapitulatif, toujours visible en haut --- */
+::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--color-accent-400); outline-offset: 2px; }
+
+/* --- Bandeau de marque --- */
+
+.brandbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-8);
+  background: var(--color-surface);
+  border-bottom: 3px solid var(--color-accent-900);
+}
+
+.brandbar-logo { height: 34px; width: auto; }
+
+.brandbar-text { display: flex; flex-direction: column; line-height: 1.1; gap: 2px; }
+
+.brandbar-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: 0.14em;
+  color: var(--color-accent-900);
+}
+
+.brandbar-subtitle {
+  font-size: 12.5px;
+  letter-spacing: 0.03em;
+  color: var(--color-text-muted);
+}
+
+/* --- Récapitulatif : plaque de synthèse, toujours visible en haut --- */
 
 .recap {
-  position: sticky;
-  top: 0;
   z-index: 10;
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-  padding: 0.9rem 1.5rem;
+  background:
+    linear-gradient(100deg, color-mix(in srgb, var(--color-accent-900) 96%, transparent) 0%, color-mix(in srgb, var(--color-accent-900) 80%, transparent) 55%, color-mix(in srgb, var(--color-accent-900) 92%, transparent) 100%),
+    url("img/hero-facility.jpg") center 30% / cover no-repeat,
+    var(--color-accent-900);
+  color: #fff;
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-6) var(--space-8);
 }
 
 .recap-empty {
-  color: var(--color-text-muted);
-  font-size: 0.95rem;
+  color: color-mix(in srgb, #fff 70%, transparent);
+  font-size: 1.05rem;
+  font-family: var(--font-heading);
 }
 
 .recap-main {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.5rem;
-  align-items: baseline;
+  gap: var(--space-8);
+  align-items: flex-end;
 }
 
 .recap-field {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 6px;
   min-width: 9rem;
 }
 
+.recap-field-price { margin-left: auto; }
+.recap-field-price .recap-value { color: var(--color-accent-200); font-size: 2.1rem; }
+
 .recap-label {
-  font-size: 0.72rem;
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--color-text-muted);
+  letter-spacing: 0.12em;
+  color: color-mix(in srgb, #fff 62%, transparent);
 }
 
 .recap-value {
-  font-size: 1.05rem;
+  font-size: 1.3rem;
   font-weight: 600;
-}
-
-.recap-actions {
-  margin-top: 0.6rem;
-}
-
-.recap-actions button {
-  background: var(--color-primary);
+  font-family: var(--font-mono);
   color: #fff;
-  border: none;
-  border-radius: var(--radius);
-  padding: 0.45rem 1rem;
-  font-size: 0.9rem;
-  cursor: pointer;
 }
 
-.recap-actions button:hover { background: var(--color-primary-dark); }
+.recap-actions { margin-top: var(--space-4); }
 
-.recap-messages { margin-top: 0.6rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.recap-actions button { font-family: var(--font-heading); }
+
+.recap-messages { margin-top: var(--space-4); display: flex; flex-direction: column; gap: var(--space-2); }
 
 .message {
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--radius);
-  font-size: 0.88rem;
+  padding: 10px 14px;
+  border-radius: 0;
+  font-size: 0.9rem;
+  border: 1px solid transparent;
 }
 
-.message-warning { background: var(--color-warning-bg); color: var(--color-warning-text); }
-.message-error { background: var(--color-error-bg); color: var(--color-error-text); }
-.message-success { background: var(--color-success-bg); color: var(--color-success-text); }
+.message-warning { background: var(--color-warning-bg); color: var(--color-warning-text); border-color: color-mix(in srgb, var(--color-warning-text) 25%, transparent); }
+.message-error { background: var(--color-error-bg); color: var(--color-error-text); border-color: color-mix(in srgb, var(--color-error-text) 25%, transparent); }
+.message-success { background: var(--color-success-bg); color: var(--color-success-text); border-color: color-mix(in srgb, var(--color-success-text) 25%, transparent); }
 
 .recap-license {
-  margin-top: 0.6rem;
+  margin-top: var(--space-4);
   display: flex;
-  gap: 1rem;
+  gap: var(--space-3);
   flex-wrap: wrap;
 }
 
 .license-word {
-  background: #eef2f8;
-  border-radius: var(--radius);
-  padding: 0.4rem 0.7rem;
+  background: color-mix(in srgb, #fff 12%, transparent);
+  color: var(--color-accent-100);
+  border: 1px solid color-mix(in srgb, #fff 18%, transparent);
+  border-radius: 0;
+  padding: 6px 12px;
   font-size: 0.85rem;
 }
 
-.license-word b { font-family: "Cascadia Code", monospace; }
+.license-word b { font-family: var(--font-mono); color: #fff; }
 
 .recap-closest {
-  margin-top: 0.6rem;
+  margin-top: var(--space-4);
   font-size: 0.85rem;
-  color: var(--color-text-muted);
+  color: color-mix(in srgb, #fff 70%, transparent);
 }
 
-.recap-closest ul { margin: 0.3rem 0 0; padding-left: 1.2rem; }
+.recap-closest ul { margin: 6px 0 0; padding-left: 1.2rem; }
 
-/* --- Choix de la gamme --- */
+/* --- Choix de la gamme : tuiles produit --- */
 
 .family-picker {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.6rem;
-  padding: 1rem 1.5rem;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-8) var(--space-3);
 }
 
 .family-picker button {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
+  border: 1px solid var(--color-divider);
+  border-bottom: 3px solid var(--color-divider);
+  border-radius: 0;
+  padding: 16px 30px;
   cursor: pointer;
-  color: var(--color-text);
+  color: var(--color-accent-900);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
 }
 
-.family-picker button:hover { border-color: var(--color-primary); }
+.family-picker button:hover {
+  border-color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
 
 .family-picker button.active {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
+  background: var(--color-accent-900);
+  border-color: var(--color-accent-900);
+  border-bottom-color: var(--color-accent-400);
   color: #fff;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .family-picker button .license-badge {
-  margin-left: 0.4rem;
-  font-size: 0.7rem;
-  opacity: 0.75;
+  margin-left: 9px;
+  font-size: 0.62rem;
+  font-family: var(--font-mono);
+  color: var(--color-accent-400);
+  vertical-align: middle;
 }
+
+.family-picker button.active .license-badge { color: var(--color-accent-200); }
 
 .admin-link {
   text-align: right;
-  margin: 0.3rem 1.5rem;
+  margin: 4px var(--space-8) 0;
   font-size: 0.8rem;
 }
 
-.admin-link a { color: var(--color-text-muted); }
+.admin-link a { color: var(--color-text-muted); text-decoration: none; border-bottom: 1px solid var(--color-divider); }
+.admin-link a:hover { color: var(--color-accent-800); border-color: var(--color-accent); }
 
 /* --- Configurateur --- */
 
 .configurator {
-  padding: 0 1.5rem 3rem;
-  max-width: 60rem;
+  padding: var(--space-6) var(--space-8) 4.5rem;
+  max-width: 68rem;
 }
 
-#family-title { font-size: 1.3rem; margin: 0.5rem 0 1rem; }
+.configurator-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+#family-title {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 2.3rem;
+  margin: 0;
+  color: var(--color-accent-900);
+}
+
+.product-visual {
+  flex-shrink: 0;
+  width: 220px;
+  height: 150px;
+  background: #fff;
+  border: 1px solid var(--color-divider);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3);
+}
+
+.product-visual[hidden] { display: none; }
+
+.product-visual img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
 
 .section {
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  margin-bottom: 1rem;
-  overflow: hidden;
+  border: 1px solid var(--color-divider);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--space-6);
 }
 
 .section-title {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-text-muted);
+  font-family: var(--font-heading);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--color-accent-900);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  padding: 0.6rem 1rem;
-  border-bottom: 1px solid var(--color-border);
-  background: #fafbfc;
+  letter-spacing: 0.12em;
+  padding: var(--space-3) var(--space-4);
 }
 
 .group {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-divider);
 }
 
 .group:last-child { border-bottom: none; }
 
 .group-label {
+  font-family: var(--font-heading);
   font-weight: 600;
-  font-size: 0.92rem;
-  margin-bottom: 0.4rem;
+  font-size: 1.1rem;
+  margin-bottom: var(--space-3);
   display: block;
+  color: var(--color-accent-900);
 }
 
 .option-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.25rem 0;
+  gap: var(--space-3);
+  padding: 8px 0;
 }
 
 .option-row label {
   flex: 1;
-  font-size: 0.92rem;
+  font-size: 1rem;
   cursor: pointer;
 }
 
+.option-row input[type="radio"],
+.option-row input[type="checkbox"] {
+  appearance: none;
+  margin: 0;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border: 2px solid var(--color-divider);
+  background: var(--color-bg);
+  cursor: pointer;
+  position: relative;
+}
+
+.option-row input[type="radio"] { border-radius: 50%; }
+.option-row input[type="checkbox"] { border-radius: 0; }
+
+.option-row input:hover { border-color: var(--color-accent); }
+
+.option-row input:checked {
+  border-color: var(--color-accent-900);
+  background: var(--color-accent-900);
+}
+
+.option-row input[type="radio"]:checked::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  background: var(--color-bg);
+}
+
+.option-row input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 1px;
+  width: 6px;
+  height: 10px;
+  border: solid var(--color-bg);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
 .info-button {
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-divider);
   background: var(--color-surface);
   color: var(--color-text-muted);
   border-radius: 50%;
-  width: 1.3rem;
-  height: 1.3rem;
-  font-size: 0.75rem;
+  width: 22px;
+  height: 22px;
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
   line-height: 1;
   cursor: pointer;
   flex-shrink: 0;
 }
 
-.info-button:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.info-button:hover { border-color: var(--color-accent); color: var(--color-accent-800); background: var(--color-accent-100); }
+
+/* --- Boutons --- */
+
+.btn, #export-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  border-radius: 0;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+  padding: 13px 28px;
+  transition: transform 0.1s ease, background 0.1s ease;
+}
+
+.btn-primary, #export-button {
+  background: var(--color-bg);
+  color: var(--color-accent-900);
+  border: none;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover, #export-button:hover { background: #fff; transform: translateY(-1px); }
+.btn-primary:active, #export-button:active { background: var(--color-accent-100); transform: translateY(0); }
 
 /* --- Infobulle --- */
 
 .tooltip-layer {
   position: fixed;
   inset: 0;
-  background: rgba(20, 24, 30, 0.35);
+  background: color-mix(in srgb, var(--color-accent-900) 60%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
 }
 
-/* Sans ce rappel, `display: flex` ci-dessus prime sur l'attribut `hidden` (même
-   spécificité, règle déclarée après) et le calque reste cliquable une fois masqué. */
 .tooltip-layer[hidden] { display: none; }
 
 .tooltip-box {
   background: var(--color-surface);
-  border-radius: var(--radius);
-  padding: 1.2rem 1.4rem;
+  border-top: 4px solid var(--color-accent-900);
+  padding: var(--space-6);
   max-width: 26rem;
   position: relative;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+  box-shadow: var(--shadow-lg);
 }
 
 .tooltip-close {
   position: absolute;
-  top: 0.4rem;
-  right: 0.4rem;
+  top: var(--space-3);
+  right: var(--space-3);
   border: none;
   background: none;
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   cursor: pointer;
   color: var(--color-text-muted);
+  line-height: 1;
 }
 
-.tooltip-text { font-size: 0.95rem; line-height: 1.4; }
+.tooltip-close:hover { color: var(--color-accent-800); }
+
+.tooltip-text { font-size: 1rem; line-height: 1.5; }
 
 /* --- Fiche imprimable --- */
-/*
- * Invisible à l'écran, ne s'affiche qu'à l'impression (@media print ci-dessous) : une mise
- * en page dédiée plutôt que d'imprimer l'écran de configuration tel quel (colonnes de
- * cases à cocher, boutons, tout ce qui n'a de sens qu'à l'usage interactif).
- */
 
 .export-sheet {
   display: none;
   max-width: 48rem;
   margin: 0 auto;
-  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-  color: #1c2430;
+  font-family: var(--font-body);
+  color: #1d1f20;
 }
 
 .export-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  border-bottom: 3px solid var(--color-primary);
-  padding-bottom: 0.7rem;
-  margin-bottom: 1.2rem;
+  gap: var(--space-4);
+  border-bottom: 3px solid var(--color-accent-900);
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-6);
 }
 
-.export-logo {
-  height: 2.6rem;
-  width: auto;
-  /* Remplacer par le logo Safran officiel : frontend/img/safran-logo.jpg. Sans ce fichier,
-     l'image se masque elle-même (onerror, index.html) et seul le nom de marque en texte
-     ci-dessous reste — jamais d'icône d'image cassée sur un document professionnel. */
-}
+.export-logo { height: 2.4rem; width: auto; }
 
 .export-header-text { flex: 1; }
 
 .export-brand {
-  font-size: 1.3rem;
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--color-primary);
+  letter-spacing: 0.1em;
+  color: var(--color-accent-900);
 }
 
-.export-doc-title {
-  font-size: 0.85rem;
-  color: var(--color-text-muted);
-}
+.export-doc-title { font-size: 0.85rem; color: var(--color-text-muted); }
 
-.export-date {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-  white-space: nowrap;
-}
+.export-date { font-size: 0.8rem; color: var(--color-text-muted); white-space: nowrap; }
 
-.export-family {
-  font-size: 1.5rem;
-  margin: 0 0 1.2rem;
-}
+.export-family { font-family: var(--font-heading); font-size: 1.6rem; margin: 0 0 var(--space-6); }
 
-.export-block { margin-bottom: 1.4rem; }
+.export-block { margin-bottom: var(--space-6); }
 
 .export-block h2 {
+  font-family: var(--font-heading);
   font-size: 0.8rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-primary);
-  border-bottom: 1px solid var(--color-border);
-  padding-bottom: 0.3rem;
-  margin: 0 0 0.6rem;
+  letter-spacing: 0.08em;
+  color: var(--color-accent-900);
+  border-bottom: 1px solid var(--color-divider);
+  padding-bottom: 5px;
+  margin: 0 0 var(--space-3);
 }
 
 .export-summary-table, .export-config-table {
@@ -348,26 +524,27 @@ body {
   color: var(--color-text-muted);
   width: 12rem;
   vertical-align: top;
-  padding: 0.3rem 0.6rem 0.3rem 0;
+  padding: 5px 10px 5px 0;
 }
 
 .export-summary-table td, .export-config-table td {
-  padding: 0.3rem 0;
-  border-bottom: 1px solid var(--color-border);
+  padding: 5px 0;
+  border-bottom: 1px solid var(--color-divider);
 }
 
 .export-config-table .export-section-row th {
-  padding-top: 0.8rem;
-  color: var(--color-primary);
+  padding-top: var(--space-3);
+  color: var(--color-accent-900);
   font-size: 0.78rem;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.05em;
 }
 
 .export-option-technical {
   display: block;
   color: var(--color-text-muted);
   font-size: 0.8rem;
+  font-family: var(--font-mono);
 }
 
 .export-license-table {
@@ -378,22 +555,22 @@ body {
 
 .export-license-table th, .export-license-table td {
   text-align: left;
-  padding: 0.3rem 0.6rem 0.3rem 0;
-  border-bottom: 1px solid var(--color-border);
+  padding: 5px 10px 5px 0;
+  border-bottom: 1px solid var(--color-divider);
 }
 
-.export-license-table td.export-hex { font-family: "Cascadia Code", monospace; font-weight: 600; }
+.export-license-table td.export-hex { font-family: var(--font-mono); font-weight: 600; }
 
 .export-footer {
-  margin-top: 2rem;
-  padding-top: 0.6rem;
-  border-top: 1px solid var(--color-border);
+  margin-top: 2.4rem;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-divider);
   font-size: 0.75rem;
   color: var(--color-text-muted);
 }
 
 @media print {
-  .family-picker, .configurator, .recap, .admin-link, .tooltip-layer { display: none !important; }
+  .brandbar, .family-picker, .configurator, .recap, .admin-link, .tooltip-layer { display: none !important; }
   body { background: #fff; }
   .export-sheet { display: block; }
 }
