@@ -5,8 +5,41 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Catalogue Industriel</title>
 <link rel="stylesheet" href="css/style.css?v=7">
+<link rel="stylesheet" href="css/hero.css?v=1">
+<noscript><style>#intro{display:none}</style></noscript>
 </head>
 <body>
+
+<section id="intro">
+  <div id="stage">
+    <div id="glow"></div>
+
+    <div id="tagline">
+      <h1>Catalogue industriel</h1>
+      <p>Configurateur produits industriels — Safran Data Systems</p>
+    </div>
+
+    <div id="world">
+      <img src="img/hero-crt.webp" alt="" draggable="false">
+      <div id="bezel-bloom"></div>
+    </div>
+
+    <div id="screen">
+      <div id="app-frame"></div>
+      <div id="veil"></div>
+      <div id="power-line"></div>
+      <div id="crt-fx"><div id="crt-flicker"></div></div>
+    </div>
+
+    <div id="hint">
+      <div class="mouse"></div>
+      <span>Défiler pour entrer</span>
+    </div>
+  </div>
+</section>
+<div id="app-dock"></div>
+
+<div id="app-root">
 
 <div class="brandbar">
   <img src="img/safran-logo.jpg" alt="Safran" class="brandbar-logo" onerror="this.style.display='none'">
@@ -107,9 +140,12 @@
   </footer>
 </div>
 
+</div><!-- /app-root -->
+
 <!-- Le paramètre ?v= force le navigateur à recharger le fichier au lieu de garder une
      ancienne version en cache : à incrémenter à chaque modification de ces fichiers. -->
 <script src="js/api.js?v=2"></script>
 <script src="js/app.js?v=7"></script>
+<script src="js/hero.js?v=1"></script>
 </body>
 </html>
