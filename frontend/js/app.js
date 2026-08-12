@@ -2,6 +2,7 @@ const state = {
   families: [],
   currentFamily: null, // détail complet (avec groups) de la gamme sélectionnée
   selectedIds: new Set(),
+  articlesById: new Map(), // id de ligne de grille -> { item_number, option_ids }, pour le sélecteur
 };
 
 // Visuel produit dans l'en-tête du configurateur (frontend/img/products/) : seules ces
@@ -23,6 +24,7 @@ const el = {
   familyTitle: document.getElementById("family-title"),
   productVisual: document.getElementById("product-visual"),
   productVisualImg: document.getElementById("product-visual-img"),
+  articlePicker: document.getElementById("article-picker-select"),
   groups: document.getElementById("groups"),
   recapEmpty: document.getElementById("recap-empty"),
   recapContent: document.getElementById("recap-content"),
@@ -62,6 +64,7 @@ async function init() {
   el.tooltipLayer.addEventListener("click", (event) => {
     if (event.target === el.tooltipLayer) hideTooltip();
   });
+  el.articlePicker.addEventListener("change", onArticlePicked);
 
   try {
     state.families = await api.listFamilies();
@@ -102,7 +105,44 @@ async function selectFamily(code, button) {
   el.configurator.hidden = false;
   updateProductVisual(code);
   renderGroups();
+  await loadArticlePicker(code);
   await refreshConfiguration();
+}
+
+// Liste déroulante « rechercher un code article » : un raccourci pour un commercial qui
+// connaît déjà le code voulu, plutôt qu'un second circuit de résolution — voir
+// onArticlePicked, qui se contente de cocher les mêmes cases qu'une sélection manuelle.
+async function loadArticlePicker(code) {
+  state.articlesById = new Map();
+  el.articlePicker.innerHTML = "";
+  const placeholder = el_("option", null, "— choisir —");
+  placeholder.value = "";
+  el.articlePicker.appendChild(placeholder);
+
+  try {
+    const articles = await api.listFamilyArticles(code);
+    for (const article of articles) {
+      state.articlesById.set(String(article.id), article);
+      const label = article.designation
+        ? `${article.item_number} — ${article.designation}`
+        : article.item_number;
+      const option = el_("option", null, label);
+      option.value = String(article.id);
+      el.articlePicker.appendChild(option);
+    }
+  } catch (error) {
+    // Liste secondaire : une erreur ici ne doit pas empêcher de configurer à la main.
+  }
+}
+
+function onArticlePicked() {
+  const entry = state.articlesById.get(el.articlePicker.value);
+  if (!entry) return;
+  const wanted = new Set(entry.option_ids);
+  for (const input of el.groups.querySelectorAll("input")) {
+    input.checked = wanted.has(Number(input.dataset.optionId));
+  }
+  onSelectionChange();
 }
 
 // Cadre masqué par défaut (index.html) : on ne le montre qu'une fois l'image chargée avec

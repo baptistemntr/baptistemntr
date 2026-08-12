@@ -10,9 +10,10 @@ from catalogue import snowflake_client
 from catalogue.admin import router as admin_router
 from catalogue.agile_sync import sync_articles
 from catalogue.database import SessionLocal, init_db
-from catalogue.models import Article, OptionGroup, ProductFamily
+from catalogue.models import Article, ArticleMapping, OptionGroup, ProductFamily
 from catalogue.resolver import build_license, check_rules, resolve_article
 from catalogue.schemas import (
+    ArticleListItemOut,
     ConfigurationRequest,
     ConfigurationResult,
     FamilyDetailOut,
@@ -63,6 +64,43 @@ def get_family(code: str) -> FamilyDetailOut:
         if family is None:
             raise HTTPException(status_code=404, detail=f"Gamme inconnue : {code}")
         return FamilyDetailOut.model_validate(family, from_attributes=True)
+    finally:
+        session.close()
+
+
+@app.get("/api/families/{code}/articles", response_model=list[ArticleListItemOut])
+def list_family_articles(code: str) -> list[ArticleListItemOut]:
+    """Alimente le sélecteur « rechercher un code article » côté commercial.
+
+    Une ligne par combinaison distincte de la grille, désignation lue depuis le miroir
+    Agile en priorité (même règle de repli que resolve_article). Les lignes qui partagent
+    la signature d'une ligne déjà retenue sont écartées : cocher leur combinaison désigne
+    en réalité un autre article (le premier trouvé, comme resolve_article), les proposer
+    ici serait trompeur.
+    """
+    session: Session = SessionLocal()
+    try:
+        mappings = (
+            session.query(ArticleMapping)
+            .filter(ArticleMapping.family_code == code, ArticleMapping.item_number.isnot(None))
+            .all()
+        )
+        seen_signatures: set[str] = set()
+        out: list[ArticleListItemOut] = []
+        for mapping in mappings:
+            if mapping.signature in seen_signatures:
+                continue
+            seen_signatures.add(mapping.signature)
+            article = session.get(Article, mapping.item_number)
+            designation = (article.description if article else None) or mapping.designation
+            out.append(ArticleListItemOut(
+                id=mapping.id,
+                item_number=mapping.item_number,
+                designation=designation,
+                option_ids=[o.id for o in mapping.options],
+            ))
+        out.sort(key=lambda a: a.item_number)
+        return out
     finally:
         session.close()
 

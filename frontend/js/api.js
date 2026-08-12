@@ -48,6 +48,7 @@ const api = {
   health: () => apiRequest("/api/health"),
   listFamilies: () => apiRequest("/api/families"),
   getFamily: (code) => apiRequest(`/api/families/${encodeURIComponent(code)}`),
+  listFamilyArticles: (code) => apiRequest(`/api/families/${encodeURIComponent(code)}/articles`),
   configure: (familyCode, optionIds) =>
     apiRequest("/api/configure", {
       method: "POST",

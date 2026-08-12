@@ -36,6 +36,17 @@ class FamilyDetailOut(FamilyOut):
     groups: list[OptionGroupOut]
 
 
+class ArticleListItemOut(BaseModel):
+    """Une ligne de la grille pour le sélecteur « rechercher un code article » côté
+    commercial : de quoi peupler la liste déroulante et cocher les cases correspondantes
+    sans repasser par l'écran d'administration."""
+
+    id: int
+    item_number: str
+    designation: str | None = None
+    option_ids: list[int]
+
+
 class ConfigurationRequest(BaseModel):
     family_code: str
     option_ids: list[int]
