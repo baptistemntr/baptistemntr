@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Catalogue Industriel</title>
-<link rel="stylesheet" href="css/style.css?v=8">
+<title>Catalogue Industriel — Safran Data Systems</title>
+<link rel="stylesheet" href="css/style.css?v=15">
 <link rel="stylesheet" href="css/hero.css?v=1">
 <noscript><style>#intro{display:none}</style></noscript>
 </head>
@@ -41,120 +41,190 @@
 
 <div id="app-root">
 
-<div class="brandbar">
-  <img src="img/safran-logo.jpg" alt="Safran" class="brandbar-logo" onerror="this.style.display='none'">
-  <div class="brandbar-text">
-    <span class="brandbar-title">Data Systems</span>
-    <span class="brandbar-subtitle">Configurateur produits industriels</span>
-  </div>
-</div>
-
-<header id="recap" class="recap">
-  <div class="recap-empty" id="recap-empty">Choisissez une gamme pour commencer une configuration.</div>
-  <div class="recap-content" id="recap-content" hidden>
-    <div class="recap-main">
-      <div class="recap-field">
-        <span class="recap-label">Désignation</span>
-        <span class="recap-value" id="recap-designation">—</span>
-      </div>
-      <div class="recap-field">
-        <span class="recap-label">Référence commerciale</span>
-        <span class="recap-value" id="recap-commercial-ref">—</span>
-      </div>
-      <div class="recap-field">
-        <span class="recap-label">Code article Agile</span>
-        <span class="recap-value" id="recap-item-number">—</span>
-      </div>
-      <div class="recap-field recap-field-price">
-        <span class="recap-label">Prix</span>
-        <span class="recap-value" id="recap-price">—</span>
+  <header class="brandbar">
+    <div class="brandbar-left">
+      <img src="img/safran-logo.jpg" alt="Safran" class="brandbar-logo" onerror="this.style.display='none'">
+      <div class="brandbar-brand">
+        <span class="brandbar-title">Safran Data Systems</span>
+        <span class="brandbar-subtitle">Industrial Product Configurator</span>
       </div>
     </div>
-    <div class="recap-actions">
-      <button id="export-button" type="button">Exporter la fiche</button>
+    <div class="brandbar-right">
+      <button id="btn-back-to-crt" class="crt-view-btn" type="button" title="Revenir à la vue équipement Cortex">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <span>Vue Cortex</span>
+      </button>
+      <div class="telemetry-status">
+        <span class="status-pulse"></span>
+        <span>AGILE SYNC : LIVE</span>
+      </div>
+      <a href="admin.html" class="admin-badge-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        <span>Espace IMI</span>
+      </a>
     </div>
-    <div class="recap-messages" id="recap-messages"></div>
-    <div class="recap-license" id="recap-license" hidden></div>
-    <div class="recap-closest" id="recap-closest" hidden></div>
-  </div>
-</header>
-
-<nav id="family-picker" class="family-picker" aria-label="Choix de la gamme"></nav>
-
-<p class="admin-link"><a href="admin.html">Espace IMI</a></p>
-
-<main id="configurator" class="configurator" hidden>
-  <div class="configurator-head">
-    <h1 id="family-title"></h1>
-    <div class="product-visual" id="product-visual" hidden><img id="product-visual-img" alt=""></div>
-  </div>
-
-  <!-- Raccourci pour un commercial qui connaît déjà le code article voulu : le choisir ici
-       coche les mêmes cases que s'il les avait cochées à la main (voir onArticlePicked
-       dans app.js) — pas un second circuit, juste un autre point d'entrée vers le même état. -->
-  <div class="article-picker">
-    <label for="article-picker-select">Rechercher un code article</label>
-    <select id="article-picker-select">
-      <option value="">— choisir —</option>
-    </select>
-  </div>
-
-  <div id="groups"></div>
-</main>
-
-<div id="tooltip-layer" class="tooltip-layer" hidden>
-  <div class="tooltip-box">
-    <button type="button" class="tooltip-close" id="tooltip-close" aria-label="Fermer">×</button>
-    <div class="tooltip-text" id="tooltip-text"></div>
-  </div>
-</div>
-
-<!-- Fiche imprimable : invisible à l'écran (.export-sheet, style.css), ne s'affiche qu'à
-     l'impression (Ctrl+P → « Enregistrer en PDF »). Reconstruite à chaque changement de
-     configuration (buildExportSheet dans app.js), pas seulement au clic sur « Exporter ». -->
-<div id="export-sheet" class="export-sheet">
-  <header class="export-header">
-    <img src="img/safran-logo.jpg" alt="Safran" class="export-logo"
-         onerror="this.style.display='none'">
-    <div class="export-header-text">
-      <div class="export-brand">SAFRAN</div>
-      <div class="export-doc-title">Fiche de configuration — Catalogue Industriel</div>
-    </div>
-    <div class="export-date" id="export-date"></div>
   </header>
 
-  <h1 class="export-family" id="export-family"></h1>
-
-  <section class="export-block">
-    <h2>Article</h2>
-    <table class="export-summary-table">
-      <tr><th>Désignation</th><td id="export-designation">—</td></tr>
-      <tr><th>Référence commerciale</th><td id="export-commercial-ref">—</td></tr>
-      <tr><th>Code article Agile</th><td id="export-item-number">—</td></tr>
-      <tr><th>Prix</th><td id="export-price">—</td></tr>
-    </table>
-    <div id="export-messages"></div>
+  <section class="family-section">
+    <div class="section-label-bar">
+      <span class="section-tag">Étape 01</span>
+      <span class="section-heading-text">Sélectionnez une gamme d'équipements</span>
+    </div>
+    <nav id="family-picker" class="family-picker" aria-label="Choix de la gamme"></nav>
   </section>
 
-  <section class="export-block">
-    <h2>Configuration sélectionnée</h2>
-    <table class="export-config-table" id="export-config-table"></table>
-  </section>
+  <div id="recap-empty" class="recap-placeholder">
+    Sélectionnez une gamme ci-dessus pour lancer la configuration technique et commerciale.
+  </div>
 
-  <section class="export-block" id="export-license-block" hidden>
-    <h2>Licence</h2>
-    <div id="export-license"></div>
-  </section>
+  <main id="configurator" class="configurator" hidden>
 
-  <footer class="export-footer">
-    Document généré automatiquement par le configurateur Safran — à valider avant commande.
-  </footer>
-</div>
+    <div class="configurator-left">
+      <div class="configurator-head">
+        <h1 id="family-title"></h1>
+        <p id="family-desc" class="family-description"></p>
+      </div>
+
+      <div class="article-picker" id="article-picker" hidden>
+        <label class="article-picker-label" for="article-picker-select">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Rechercher un article existant par code Agile
+        </label>
+        <select id="article-picker-select" class="article-picker-select">
+          <option value="">— Choisir un code article —</option>
+        </select>
+      </div>
+
+      <div id="groups"></div>
+    </div>
+
+    <aside class="configurator-sidebar" id="recap-content">
+
+      <div class="product-visual-card" id="product-visual" hidden>
+        <span class="product-visual-badge" id="product-visual-badge">Spécification Matérielle</span>
+        <div class="product-visual-container">
+          <img id="product-visual-img" alt="Aperçu Produit">
+        </div>
+      </div>
+
+      <div class="recap-card" id="recap-main-card">
+        <div class="recap-header-status">
+          <span class="status-indicator standard" id="recap-status-pill">
+            <span class="status-pulse"></span>
+            <span id="recap-status-text">Configuration Prête</span>
+          </span>
+          <span class="section-tag">Devis Live</span>
+        </div>
+
+        <div class="recap-price-block">
+          <span class="recap-price-label">Prix unitaire indicatif</span>
+          <span class="recap-price-value" id="recap-price">—</span>
+        </div>
+
+        <div class="recap-meta-list">
+          <div class="recap-meta-item">
+            <div class="recap-meta-item-head">
+              <span class="recap-meta-label">Désignation commerciale</span>
+            </div>
+            <div class="recap-meta-value" id="recap-designation">—</div>
+          </div>
+
+          <div class="recap-meta-item">
+            <div class="recap-meta-item-head">
+              <span class="recap-meta-label">Référence commerciale</span>
+              <button type="button" class="recap-copy-btn" id="copy-commercial-btn" title="Copier la référence">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span>Copier</span>
+              </button>
+            </div>
+            <div class="recap-meta-value" id="recap-commercial-ref">—</div>
+          </div>
+
+          <div class="recap-meta-item">
+            <div class="recap-meta-item-head">
+              <span class="recap-meta-label">Code article Agile</span>
+              <button type="button" class="recap-copy-btn" id="copy-item-btn" title="Copier le code Agile">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span>Copier</span>
+              </button>
+            </div>
+            <div class="recap-meta-value" id="recap-item-number">—</div>
+          </div>
+        </div>
+
+        <button id="export-button" type="button" class="btn-export-quote">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Exporter la fiche PDF</span>
+        </button>
+      </div>
+
+      <div class="recap-messages-container" id="recap-messages"></div>
+
+      <div class="recap-license-card" id="recap-license-card" hidden>
+        <div class="license-card-title">Télémétrie Licences & Clés</div>
+        <div class="license-words-grid" id="recap-license"></div>
+      </div>
+
+      <div class="recap-closest-card" id="recap-closest-card" hidden>
+        <div class="closest-card-title">Articles standard les plus proches</div>
+        <div class="closest-articles-list" id="recap-closest"></div>
+      </div>
+
+    </aside>
+  </main>
+
+  <div id="tooltip-layer" class="tooltip-layer" hidden>
+    <div class="tooltip-box">
+      <div class="tooltip-header">
+        <span class="tooltip-title">Spécification Technique</span>
+        <button type="button" class="tooltip-close" id="tooltip-close" aria-label="Fermer">×</button>
+      </div>
+      <div class="tooltip-text" id="tooltip-text"></div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <div id="export-sheet" class="export-sheet">
+    <header class="export-header">
+      <img src="img/safran-logo.jpg" alt="Safran" class="export-logo" onerror="this.style.display='none'">
+      <div class="export-header-text">
+        <div class="export-brand">SAFRAN DATA SYSTEMS</div>
+        <div class="export-doc-title">Fiche de configuration technique & commerciale</div>
+      </div>
+      <div class="export-date" id="export-date"></div>
+    </header>
+
+    <h1 class="export-family" id="export-family"></h1>
+
+    <section class="export-block">
+      <h2>Synthèse Article</h2>
+      <table class="export-summary-table">
+        <tr><th>Désignation</th><td id="export-designation">—</td></tr>
+        <tr><th>Référence commerciale</th><td id="export-commercial-ref">—</td></tr>
+        <tr><th>Code article Agile</th><td id="export-item-number">—</td></tr>
+        <tr><th>Prix unitaire indicatif</th><td id="export-price">—</td></tr>
+      </table>
+      <div id="export-messages"></div>
+    </section>
+
+    <section class="export-block">
+      <h2>Options & Équipements Sélectionnés</h2>
+      <table class="export-config-table" id="export-config-table"></table>
+    </section>
+
+    <section class="export-block" id="export-license-block" hidden>
+      <h2>Mots de Licence & Télémétrie</h2>
+      <div id="export-license"></div>
+    </section>
+
+    <footer class="export-footer">
+      Document officiel généré par le configurateur Safran Data Systems — Sous réserve de validation finale par l'équipe commerciale.
+    </footer>
+  </div>
 
 </div><!-- /app-root -->
 
-<!-- Le paramètre ?v= force le navigateur à recharger le fichier au lieu de garder une
-     ancienne version en cache : à incrémenter à chaque modification de ces fichiers. -->
 <script src="js/api.js?v=2"></script>
 <script src="js/app.js?v=8"></script>
 <script src="js/hero.js?v=1"></script>

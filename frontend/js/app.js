@@ -1,13 +1,10 @@
 const state = {
   families: [],
-  currentFamily: null, // détail complet (avec groups) de la gamme sélectionnée
+  currentFamily: null,
   selectedIds: new Set(),
-  articlesById: new Map(), // id de ligne de grille -> { item_number, option_ids }, pour le sélecteur
+  articlesById: new Map(),
 };
 
-// Visuel produit dans l'en-tête du configurateur (frontend/img/products/) : seules ces
-// gammes ont une illustration pour l'instant, les autres masquent simplement le cadre
-// (voir updateProductVisual).
 const PRODUCT_IMAGES = {
   CRT: "img/products/crt.webp",
   DTR: "img/products/dtr.webp",
@@ -22,20 +19,30 @@ const el = {
   familyPicker: document.getElementById("family-picker"),
   configurator: document.getElementById("configurator"),
   familyTitle: document.getElementById("family-title"),
+  familyDesc: document.getElementById("family-desc"),
   productVisual: document.getElementById("product-visual"),
   productVisualImg: document.getElementById("product-visual-img"),
-  articlePicker: document.getElementById("article-picker-select"),
+  productVisualBadge: document.getElementById("product-visual-badge"),
+  articlePicker: document.getElementById("article-picker"),
+  articlePickerSelect: document.getElementById("article-picker-select"),
   groups: document.getElementById("groups"),
   recapEmpty: document.getElementById("recap-empty"),
   recapContent: document.getElementById("recap-content"),
+  recapStatusPill: document.getElementById("recap-status-pill"),
+  recapStatusText: document.getElementById("recap-status-text"),
   designation: document.getElementById("recap-designation"),
   commercialRef: document.getElementById("recap-commercial-ref"),
   itemNumber: document.getElementById("recap-item-number"),
   price: document.getElementById("recap-price"),
   messages: document.getElementById("recap-messages"),
   license: document.getElementById("recap-license"),
+  licenseCard: document.getElementById("recap-license-card"),
   closest: document.getElementById("recap-closest"),
+  closestCard: document.getElementById("recap-closest-card"),
   exportButton: document.getElementById("export-button"),
+  copyCommercialBtn: document.getElementById("copy-commercial-btn"),
+  copyItemBtn: document.getElementById("copy-item-btn"),
+  toastContainer: document.getElementById("toast-container"),
   tooltipLayer: document.getElementById("tooltip-layer"),
   tooltipText: document.getElementById("tooltip-text"),
   tooltipClose: document.getElementById("tooltip-close"),
@@ -58,32 +65,93 @@ function el_(tag, className, text) {
   return node;
 }
 
+function showToast(message) {
+  if (!el.toastContainer) return;
+  const toast = el_("div", "toast", message);
+  el.toastContainer.appendChild(toast);
+  setTimeout(() => {
+    if (toast.parentNode) toast.remove();
+  }, 3000);
+}
+
+function copyToClipboard(text, label) {
+  if (!text || text === "—") return;
+  navigator.clipboard.writeText(text).then(() => {
+    showToast(`${label} copié dans le presse-papier : ${text}`);
+  }).catch(() => {
+    showToast(`Erreur lors de la copie`);
+  });
+}
+
 async function init() {
-  el.exportButton.addEventListener("click", () => window.print());
-  el.tooltipClose.addEventListener("click", hideTooltip);
-  el.tooltipLayer.addEventListener("click", (event) => {
+  el.exportButton?.addEventListener("click", () => window.print());
+  el.tooltipClose?.addEventListener("click", hideTooltip);
+  el.tooltipLayer?.addEventListener("click", (event) => {
     if (event.target === el.tooltipLayer) hideTooltip();
   });
-  el.articlePicker.addEventListener("change", onArticlePicked);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") hideTooltip();
+  });
+
+  el.copyCommercialBtn?.addEventListener("click", () => {
+    copyToClipboard(el.commercialRef.textContent, "Référence commerciale");
+  });
+  el.copyItemBtn?.addEventListener("click", () => {
+    copyToClipboard(el.itemNumber.textContent, "Code article Agile");
+  });
+
+  el.articlePickerSelect?.addEventListener("change", onArticlePicked);
+
+  setup3DVisualTilt();
 
   try {
     state.families = await api.listFamilies();
     renderFamilyPicker();
   } catch (error) {
-    el.recapEmpty.textContent =
-      `Impossible de contacter l'API (${API_BASE || window.location.origin}) : ${error.message}. ` +
-      "Vérifiez que le backend tourne et qu'il est joignable depuis ce navigateur.";
+    if (el.recapEmpty) {
+      el.recapEmpty.textContent =
+        `Impossible de contacter l'API (${API_BASE || window.location.origin}) : ${error.message}. ` +
+        "Vérifiez que le serveur backend est en cours d'exécution.";
+    }
   }
+}
+
+function setup3DVisualTilt() {
+  const card = el.productVisual;
+  if (!card) return;
+
+  card.addEventListener("mousemove", (e) => {
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    const rotateX = ((y - centerY) / centerY) * -10;
+    const rotateY = ((x - centerX) / centerX) * 10;
+
+    card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale3d(1.02, 1.02, 1.02)`;
+  });
+
+  card.addEventListener("mouseleave", () => {
+    card.style.transform = "perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)";
+  });
 }
 
 function renderFamilyPicker() {
   el.familyPicker.innerHTML = "";
   for (const family of state.families) {
-    const button = el_("button", null, family.label);
+    const button = document.createElement("button");
     button.type = "button";
+
+    const title = el_("span", "family-card-title", family.label);
+    button.appendChild(title);
+
     if (family.has_license) {
-      button.appendChild(el_("span", "license-badge", "🔑 licence"));
+      const badge = el_("span", "license-badge", "🔑 Licence active");
+      button.appendChild(badge);
     }
+
     button.addEventListener("click", () => selectFamily(family.code, button));
     el.familyPicker.appendChild(button);
   }
@@ -101,53 +169,57 @@ async function selectFamily(code, button) {
   }
   state.selectedIds = new Set();
 
-  el.familyTitle.textContent = state.currentFamily.label;
+  if (el.familyTitle) el.familyTitle.textContent = state.currentFamily.label;
+  if (el.familyDesc) el.familyDesc.textContent = state.currentFamily.description || "Sélectionnez les options ci-dessous pour configurer l'équipement.";
+  if (el.recapEmpty) el.recapEmpty.hidden = true;
   el.configurator.hidden = false;
+
   updateProductVisual(code);
   renderGroups();
   await loadArticlePicker(code);
   await refreshConfiguration();
 }
 
-// Liste déroulante « rechercher un code article » : un raccourci pour un commercial qui
-// connaît déjà le code voulu, plutôt qu'un second circuit de résolution — voir
-// onArticlePicked, qui se contente de cocher les mêmes cases qu'une sélection manuelle.
 async function loadArticlePicker(code) {
-  state.articlesById = new Map();
-  el.articlePicker.innerHTML = "";
-  const placeholder = el_("option", null, "— choisir —");
-  placeholder.value = "";
-  el.articlePicker.appendChild(placeholder);
+  if (!el.articlePicker || !el.articlePickerSelect) return;
 
+  state.articlesById = new Map();
+  el.articlePickerSelect.innerHTML = "";
+  el.articlePickerSelect.appendChild(el_("option", null, "— Choisir un code article —")).value = "";
+
+  let articles = [];
   try {
-    const articles = await api.listFamilyArticles(code);
-    for (const article of articles) {
-      state.articlesById.set(String(article.id), article);
-      const label = article.designation
-        ? `${article.item_number} — ${article.designation}`
-        : article.item_number;
-      const option = el_("option", null, label);
-      option.value = String(article.id);
-      el.articlePicker.appendChild(option);
-    }
+    articles = await api.listFamilyArticles(code);
   } catch (error) {
-    // Liste secondaire : une erreur ici ne doit pas empêcher de configurer à la main.
+    el.articlePicker.hidden = true;
+    return;
   }
+
+  if (!articles.length) {
+    el.articlePicker.hidden = true;
+    return;
+  }
+
+  for (const article of articles) {
+    state.articlesById.set(String(article.id), article);
+    const option = el_("option", null, `${article.item_number} — ${article.designation || "sans désignation"}`);
+    option.value = String(article.id);
+    el.articlePickerSelect.appendChild(option);
+  }
+  el.articlePicker.hidden = false;
 }
 
 function onArticlePicked() {
-  const entry = state.articlesById.get(el.articlePicker.value);
-  if (!entry) return;
-  const wanted = new Set(entry.option_ids);
+  const article = state.articlesById.get(el.articlePickerSelect.value);
+  if (!article) return;
+
   for (const input of el.groups.querySelectorAll("input")) {
-    input.checked = wanted.has(Number(input.dataset.optionId));
+    input.checked = article.option_ids.includes(Number(input.dataset.optionId));
   }
+
   onSelectionChange();
 }
 
-// Cadre masqué par défaut (index.html) : on ne le montre qu'une fois l'image chargée avec
-// succès, jamais entre-temps ni en cas d'échec — même logique que le logo Safran (onerror),
-// pour ne jamais laisser une icône d'image cassée à l'écran devant un client.
 function updateProductVisual(code) {
   const src = PRODUCT_IMAGES[code];
   if (!src) {
@@ -155,9 +227,12 @@ function updateProductVisual(code) {
     el.productVisualImg.removeAttribute("src");
     return;
   }
-  el.productVisualImg.onload = () => { el.productVisual.hidden = false; };
+  el.productVisualImg.onload = () => {
+    el.productVisual.hidden = false;
+    if (el.productVisualBadge) el.productVisualBadge.textContent = `Gamme ${code} — Spécification`;
+  };
   el.productVisualImg.onerror = () => { el.productVisual.hidden = true; };
-  el.productVisualImg.alt = state.currentFamily.label;
+  el.productVisualImg.alt = state.currentFamily ? state.currentFamily.label : code;
   el.productVisualImg.src = src;
 }
 
@@ -171,27 +246,33 @@ function renderGroups() {
     if (sectionKey !== currentSection) {
       currentSection = sectionKey;
       sectionEl = el_("section", "section");
-      sectionEl.appendChild(el_("div", "section-title", sectionKey));
+      const sectionTitle = el_("div", "section-title", sectionKey);
+      sectionEl.appendChild(sectionTitle);
       el.groups.appendChild(sectionEl);
     }
 
     const groupEl = el_("div", "group");
-    // Les groupes issus des licences/attributs commerciaux portent déjà leur nom dans le
-    // titre de section : répéter le libellé ici serait redondant.
-    if (group.section) {
-      groupEl.appendChild(el_("span", "group-label", group.label));
-    }
 
+    const groupLabelContainer = el_("div", "group-label");
+    const groupName = el_("span", null, group.section ? group.label : "Options disponibles");
+    const selectionBadge = el_(
+      "span",
+      "group-selection-badge",
+      group.selection === "single" ? "Choix unique" : "Optionnel"
+    );
+    groupLabelContainer.appendChild(groupName);
+    groupLabelContainer.appendChild(selectionBadge);
+    groupEl.appendChild(groupLabelContainer);
+
+    const optionsContainer = el_("div", "options-container");
     for (const option of group.options) {
-      groupEl.appendChild(renderOption(group, option));
+      optionsContainer.appendChild(renderOption(group, option));
     }
+    groupEl.appendChild(optionsContainer);
     sectionEl.appendChild(groupEl);
   }
 }
 
-// « C0 / PCC Motherboard + ANA board » : le code technique du classeur suivi de sa
-// définition commerciale (ligne 2 des onglets « Base de données », affichée jusqu'ici
-// seulement au survol dans Excel et derrière le bouton « i » ici).
 function optionText(option) {
   return option.technical_label
     ? `${option.label} / ${option.technical_label}`
@@ -208,17 +289,27 @@ function renderOption(group, option) {
   input.dataset.optionId = String(option.id);
   input.addEventListener("change", onSelectionChange);
 
-  const label = el_("label", null, optionText(option));
+  const label = document.createElement("label");
   label.htmlFor = input.id;
+
+  if (option.technical_label) {
+    label.innerHTML = `${option.label} <span class="option-tech-tag">— ${option.technical_label}</span>`;
+  } else {
+    label.textContent = option.label;
+  }
 
   row.appendChild(input);
   row.appendChild(label);
 
-  if (option.technical_label) {
+  if (option.help_text || option.technical_label) {
     const info = el_("button", "info-button", "i");
     info.type = "button";
-    info.setAttribute("aria-label", `Définition de ${option.label}`);
-    info.addEventListener("click", () => showTooltip(option.technical_label));
+    info.setAttribute("aria-label", `Détails techniques de ${option.label}`);
+    const helpContent = option.help_text || `${option.label} : ${option.technical_label}`;
+    info.addEventListener("click", (e) => {
+      e.stopPropagation();
+      showTooltip(helpContent);
+    });
     row.appendChild(info);
   }
 
@@ -231,6 +322,14 @@ function onSelectionChange() {
       Number(input.dataset.optionId)
     )
   );
+
+  for (const input of el.groups.querySelectorAll("input")) {
+    const row = input.closest(".option-row");
+    if (row) {
+      row.classList.toggle("active-row", input.checked);
+    }
+  }
+
   refreshConfiguration();
 }
 
@@ -244,13 +343,22 @@ async function refreshConfiguration() {
 }
 
 function renderResult(result) {
-  el.recapEmpty.hidden = true;
   el.recapContent.hidden = false;
 
   el.designation.textContent = result.designation || "—";
   el.commercialRef.textContent = result.commercial_ref || "—";
   el.itemNumber.textContent = result.item_number || "—";
   el.price.textContent = formatPrice(result.price);
+
+  if (el.recapStatusPill && el.recapStatusText) {
+    if (result.found) {
+      el.recapStatusPill.className = "status-indicator standard";
+      el.recapStatusText.textContent = "Article Standard Qualifié";
+    } else {
+      el.recapStatusPill.className = "status-indicator custom";
+      el.recapStatusText.textContent = "Configuration Sur-Mesure";
+    }
+  }
 
   el.messages.innerHTML = "";
   for (const warning of result.warnings || []) {
@@ -263,7 +371,6 @@ function renderResult(result) {
 }
 
 function renderViolations(messages) {
-  el.recapEmpty.hidden = true;
   el.recapContent.hidden = false;
 
   el.designation.textContent = "—";
@@ -271,12 +378,17 @@ function renderViolations(messages) {
   el.itemNumber.textContent = "—";
   el.price.textContent = "—";
 
+  if (el.recapStatusPill && el.recapStatusText) {
+    el.recapStatusPill.className = "status-indicator custom";
+    el.recapStatusText.textContent = "Combinaison Incompatible";
+  }
+
   el.messages.innerHTML = "";
   for (const message of messages) {
     el.messages.appendChild(el_("div", "message message-error", message));
   }
-  el.license.hidden = true;
-  el.closest.hidden = true;
+  if (el.licenseCard) el.licenseCard.hidden = true;
+  if (el.closestCard) el.closestCard.hidden = true;
 }
 
 function formatPrice(price) {
@@ -291,75 +403,77 @@ function formatPrice(price) {
 function renderLicense(license) {
   el.license.innerHTML = "";
   if (!license || Object.keys(license).length === 0) {
-    el.license.hidden = true;
+    if (el.licenseCard) el.licenseCard.hidden = true;
     return;
   }
-  el.license.hidden = false;
+  if (el.licenseCard) el.licenseCard.hidden = false;
+
   if (license.kind === "fep") {
     renderFepLicense(license);
     return;
   }
   for (const [code, word] of Object.entries(license)) {
     const item = el_("div", "license-word");
+    item.appendChild(el_("span", "license-word-label", `${word.label} (${code})`));
     item.appendChild(el_("b", null, word.hex));
-    item.appendChild(document.createTextNode(` — ${word.label} (${code})`));
     el.license.appendChild(item);
   }
 }
 
-// CRT (dongle FEP) : pas un mot en somme pondérée comme HDR, mais une table de fonctions
-// actives et de compteurs matériels — reflet direct de la section « 9 - Dongle FEP » du
-// classeur, à charge pour l'IMI de la reporter dans l'outil de programmation du dongle.
 function renderFepLicense(license) {
   const part = el_("div", "license-word");
-  part.appendChild(document.createTextNode("Dongle FEP : "));
+  part.appendChild(el_("span", "license-word-label", "Dongle FEP"));
   part.appendChild(el_("b", null, license.dongle_part_number));
   el.license.appendChild(part);
 
   const active = license.functions.filter((f) => f.active);
-  el.license.appendChild(el_(
-    "div", "license-word",
-    active.length
-      ? `Fonctions actives : ${active.map((f) => f.label).join(", ")}`
-      : "Aucune fonction active"
-  ));
+  const activeWord = el_("div", "license-word");
+  activeWord.appendChild(el_("span", "license-word-label", "Fonctions"));
+  activeWord.appendChild(el_("b", null, active.length ? active.map((f) => f.label).join(", ") : "Aucune"));
+  el.license.appendChild(activeWord);
 
   const counters = license.counters.filter((c) => c.count > 0);
   if (counters.length) {
-    el.license.appendChild(el_(
-      "div", "license-word",
-      `Compteurs : ${counters.map((c) => `${c.code}=${c.hex}`).join(", ")}`
-    ));
+    const countWord = el_("div", "license-word");
+    countWord.appendChild(el_("span", "license-word-label", "Compteurs"));
+    countWord.appendChild(el_("b", null, counters.map((c) => `${c.code}=${c.hex}`).join(", ")));
+    el.license.appendChild(countWord);
   }
 }
 
 function renderClosest(closest) {
   el.closest.innerHTML = "";
   if (!closest || closest.length === 0) {
-    el.closest.hidden = true;
+    if (el.closestCard) el.closestCard.hidden = true;
     return;
   }
-  el.closest.hidden = false;
-  el.closest.appendChild(el_("div", null, "Configurations les plus proches dans la grille :"));
-  const list = document.createElement("ul");
+  if (el.closestCard) el.closestCard.hidden = false;
+
   for (const neighbour of closest) {
-    const parts = [];
-    if (neighbour.missing.length) parts.push(`manque : ${neighbour.missing.join(", ")}`);
-    if (neighbour.extra.length) parts.push(`en trop : ${neighbour.extra.join(", ")}`);
-    list.appendChild(
-      el_("li", null, `${neighbour.item_number || "?"} (${neighbour.designation || "—"}) — ${parts.join(" / ")}`)
-    );
+    const item = el_("div", "closest-article-item");
+
+    const header = el_("div", "closest-article-header");
+    header.appendChild(el_("span", "closest-item-number", neighbour.item_number || "Article standard"));
+    if (neighbour.designation) {
+      header.appendChild(el_("span", "closest-designation", neighbour.designation));
+    }
+    item.appendChild(header);
+
+    const diffContainer = el_("div", "closest-diff-tags");
+    for (const m of neighbour.missing || []) {
+      diffContainer.appendChild(el_("span", "diff-tag-missing", `+ ${m}`));
+    }
+    for (const x of neighbour.extra || []) {
+      diffContainer.appendChild(el_("span", "diff-tag-extra", `- ${x}`));
+    }
+    item.appendChild(diffContainer);
+
+    el.closest.appendChild(item);
   }
-  el.closest.appendChild(list);
 }
 
-// --- Fiche imprimable (export PDF via Ctrl+P) --------------------------------------------
-//
-// Reconstruite à chaque configuration valide (appelée depuis renderResult), pas seulement
-// au clic sur « Exporter » : la fiche est toujours à jour quand l'impression système
-// s'ouvre, sans dépendre d'un second calcul juste avant impression.
-
 function buildExportSheet(result) {
+  if (!el.exportDate) return;
   el.exportDate.textContent = new Date().toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" });
   el.exportFamily.textContent = state.currentFamily ? state.currentFamily.label : "";
 
@@ -379,12 +493,9 @@ function buildExportSheet(result) {
   buildExportLicense(result.license);
 }
 
-// Une ligne par groupe où au moins une option est cochée (les groupes vides — « None »,
-// options commerciales non cochées — n'ont rien à montrer sur une fiche de commande) ;
-// une ligne d'en-tête par section, pour retrouver le découpage vu à l'écran.
 function buildExportConfigTable() {
+  if (!el.exportConfigTable || !state.currentFamily) return;
   el.exportConfigTable.innerHTML = "";
-  if (!state.currentFamily) return;
 
   let currentSection = null;
   for (const group of state.currentFamily.groups) {
@@ -405,8 +516,6 @@ function buildExportConfigTable() {
     row.appendChild(el_("th", null, group.section ? group.label : ""));
     const td = document.createElement("td");
     for (const option of selected) {
-      // Même format « technique / commercial » qu'à l'écran (optionText) : le commercial
-      // montre l'écran puis remet la fiche, les deux doivent se lire pareil.
       td.appendChild(el_("div", null, optionText(option)));
     }
     row.appendChild(td);
@@ -423,12 +532,13 @@ function buildExportConfigTable() {
 }
 
 function buildExportLicense(license) {
+  if (!el.exportLicense) return;
   el.exportLicense.innerHTML = "";
   if (!license || Object.keys(license).length === 0) {
-    el.exportLicenseBlock.hidden = true;
+    if (el.exportLicenseBlock) el.exportLicenseBlock.hidden = true;
     return;
   }
-  el.exportLicenseBlock.hidden = false;
+  if (el.exportLicenseBlock) el.exportLicenseBlock.hidden = false;
 
   if (license.kind === "fep") {
     buildExportFepLicense(license);
@@ -449,8 +559,6 @@ function buildExportLicense(license) {
   el.exportLicense.appendChild(table);
 }
 
-// CRT (dongle FEP) : même table que le récapitulatif à l'écran (renderFepLicense), mise en
-// forme pour l'impression plutôt que reconstruite depuis zéro.
 function buildExportFepLicense(license) {
   const table = el_("table", "export-license-table");
 
@@ -477,11 +585,13 @@ function buildExportFepLicense(license) {
 }
 
 function showTooltip(text) {
+  if (!el.tooltipLayer) return;
   el.tooltipText.textContent = text;
   el.tooltipLayer.hidden = false;
 }
 
 function hideTooltip() {
+  if (!el.tooltipLayer) return;
   el.tooltipLayer.hidden = true;
 }
 

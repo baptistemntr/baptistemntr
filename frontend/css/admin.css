@@ -1,48 +1,160 @@
-/* Espace IMI — vient après style.css, dont il réutilise les variables et le fond.
-   Même grammaire visuelle (cadres à équerres, Barlow Condensed/Barlow) appliquée à un
-   usage interne : plus dense, plus tabulaire, moins "vitrine". */
+/* ==========================================================================
+   ESPACE IMI — CONSOLE D'INGÉNIERIE SAFRAN
+   Design : Console Pro Épurée, Lumineuse et Haute Lisibilité
+   ========================================================================== */
 
 #admin-family-picker[hidden] { display: none; }
 
 .admin-header {
   display: flex;
-  align-items: baseline;
-  gap: var(--space-4);
-  padding: var(--space-3) var(--space-6);
-  background: var(--color-accent-900);
-  color: #fff;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-8);
+  background: #ffffff;
+  border-bottom: 1px solid var(--border-subtle);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
-.admin-header h1 { margin: 0; font-size: 1.15rem; color: #fff; }
+.admin-header-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
 
-.admin-scope { color: color-mix(in srgb, #fff 65%, transparent); font-size: 0.85rem; }
-.admin-scope a { color: #fff; }
+.admin-header h1 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--safran-blue-dark);
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-header h1::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-amber);
+  box-shadow: 0 0 8px var(--accent-amber);
+}
+
+.admin-tag {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent-amber);
+  background: var(--accent-amber-dim);
+  border: 1px solid rgba(217, 119, 6, 0.3);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.admin-scope a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #f8fafc;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.admin-scope a:hover {
+  background: var(--safran-blue-light);
+  border-color: var(--safran-blue);
+  color: var(--safran-blue-dark);
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   PANNEAUX D'ADMINISTRATION
+   ========================================================================== */
 
 .admin-panel {
   position: relative;
-  max-width: 960px;
+  max-width: 1100px;
   margin: var(--space-6) auto;
-  padding: var(--space-4) var(--space-6) var(--space-6);
-  background: var(--color-surface);
-  border: 1px solid var(--color-divider);
+  padding: var(--space-6);
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.admin-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .admin-panel h2 {
-  margin: 0 0 var(--space-4);
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--color-accent-800);
-  padding-bottom: var(--space-3);
-  border-bottom: 1px solid var(--color-divider);
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--safran-blue-dark);
+  letter-spacing: 0.01em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
+
+.admin-panel p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Barre de Recherche Admin */
+.admin-search-input {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-sm);
+  padding: 7px 12px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  min-width: 280px;
+  transition: all 0.2s ease;
+}
+
+.admin-search-input::placeholder {
+  color: #94a3b8;
+}
+
+.admin-search-input:focus {
+  border-color: var(--safran-blue);
+  box-shadow: 0 0 0 3px rgba(0, 85, 165, 0.12);
+  outline: none;
+}
+
+/* ==========================================================================
+   FORMULAIRES, CHAMPS & ESPACES D'ÉCRITURE HAUTE VISIBILITÉ
+   ========================================================================== */
 
 .admin-panel form label {
   display: block;
-  margin-bottom: var(--space-3);
-  font-size: 0.85rem;
-  color: var(--color-text-muted);
+  margin-bottom: var(--space-4);
+  font-size: 0.88rem;
+  font-family: var(--font-heading);
+  color: var(--text-primary);
+  font-weight: 700;
 }
 
 .admin-panel form input,
@@ -50,115 +162,265 @@
 .admin-panel form textarea {
   display: block;
   width: 100%;
-  margin-top: 5px;
-  padding: 8px 10px;
-  border: 1px solid var(--color-divider);
-  border-radius: 0;
-  background: var(--color-bg);
-  font: inherit;
-  color: var(--color-text);
+  margin-top: 6px;
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: #0f172a;
+  font-weight: 500;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.admin-panel form input:focus-visible,
-.admin-panel form select:focus-visible,
-.admin-panel form textarea:focus-visible { border-color: var(--color-accent); }
+.admin-panel form input::placeholder,
+.admin-panel form textarea::placeholder {
+  color: #94a3b8;
+}
 
+.admin-panel form input:focus,
+.admin-panel form select:focus,
+.admin-panel form textarea:focus {
+  border-color: var(--safran-blue);
+  box-shadow: 0 0 0 3px rgba(0, 85, 165, 0.15);
+  outline: none;
+  background: #ffffff;
+}
+
+.admin-panel button[type="submit"],
 .admin-panel button {
   font-family: var(--font-heading);
-  font-weight: 600;
-  padding: 8px 18px;
-  border: 1px solid var(--color-accent);
-  border-radius: 0;
-  background: var(--color-accent);
-  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 9px 18px;
+  border: 1px solid var(--safran-blue);
+  border-radius: var(--radius-sm);
+  background: var(--safran-blue);
+  color: #ffffff;
   cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 85, 165, 0.2);
+  transition: all 0.2s ease;
 }
 
-.admin-panel button:hover { background: var(--color-accent-600); border-color: var(--color-accent-600); }
+.admin-panel button:hover {
+  background: #0066cc;
+  border-color: #0066cc;
+  box-shadow: 0 4px 12px rgba(0, 85, 165, 0.3);
+  transform: translateY(-1px);
+}
 
-.admin-panel button.danger { background: var(--color-error-text); border-color: var(--color-error-text); }
-.admin-panel button.danger:hover { background: color-mix(in srgb, var(--color-error-text) 85%, black); }
+.admin-panel button.danger {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+  box-shadow: none;
+}
+
+.admin-panel button.danger:hover {
+  background: #fecaca;
+  border-color: #ef4444;
+  color: #991b1b;
+}
+
+/* ==========================================================================
+   PANNEAU DE LOGIN IMI
+   ========================================================================== */
+
+#login-panel {
+  max-width: 480px;
+  margin: var(--space-10) auto;
+  border-top: 4px solid var(--safran-blue);
+}
+
+#login-panel #login-password {
+  padding: 12px 14px;
+  font-size: 1.05rem;
+  font-family: var(--font-mono);
+  border: 2px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+#login-panel #login-password:focus {
+  border-color: var(--safran-blue);
+  box-shadow: 0 0 0 4px rgba(0, 85, 165, 0.15);
+}
+
+#login-panel button[type="submit"] {
+  width: 100%;
+  padding: 12px;
+  font-size: 0.95rem;
+  margin-top: var(--space-3);
+}
+
+/* ==========================================================================
+   GROUPES & OPTIONS D'INGÉNIERIE
+   ========================================================================== */
 
 .admin-add {
   margin-top: var(--space-4);
   padding-top: var(--space-4);
-  border-top: 1px dashed var(--color-divider);
+  border-top: 1px dashed var(--border-medium);
 }
 
 .admin-add summary {
   cursor: pointer;
-  color: var(--color-accent-800);
+  color: var(--safran-blue);
   font-family: var(--font-heading);
-  font-weight: 600;
-  font-size: 0.9rem;
+  font-weight: 700;
+  font-size: 0.92rem;
+  user-select: none;
 }
 
-.admin-add form { margin-top: var(--space-4); }
+.admin-add summary:hover {
+  color: var(--safran-blue-dark);
+  text-decoration: underline;
+}
+
+.admin-add form {
+  margin-top: var(--space-4);
+  background: #f8fafc;
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
 
 .admin-group {
-  border: 1px solid var(--color-divider);
-  padding: var(--space-3) var(--space-4);
+  background: #f8fafc;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
   margin-bottom: var(--space-3);
 }
 
 .admin-group-header {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-2);
 }
 
 .admin-group-code {
   font-family: var(--font-mono);
   font-size: 0.8rem;
-  color: var(--color-text-muted);
+  font-weight: 700;
+  color: var(--safran-blue-dark);
+  background: var(--safran-blue-light);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0, 85, 165, 0.2);
 }
 
 .admin-option-row {
   display: grid;
-  grid-template-columns: 7rem 1fr 1fr auto;
-  gap: var(--space-2);
+  grid-template-columns: 8rem 1fr 1fr auto;
+  gap: var(--space-3);
   align-items: center;
   margin-top: var(--space-2);
   font-size: 0.9rem;
 }
 
-.admin-option-row input { padding: 6px 8px; }
-.admin-option-caption { font-family: var(--font-mono); color: var(--color-text-muted); }
+.admin-option-row input {
+  padding: 7px 10px;
+  font-size: 0.9rem;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.admin-option-caption {
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   TABLES DE DONNÉES & GRILLES ARTICLES
+   ========================================================================== */
 
 .admin-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
+  margin-top: var(--space-3);
 }
 
 .admin-table th {
   text-align: left;
-  font-size: 11px;
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-text-muted);
-  border-bottom: 1px solid var(--color-divider);
-  padding: var(--space-2);
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  background: #f1f5f9;
+  border-bottom: 2px solid var(--border-medium);
+  padding: 10px var(--space-3);
+  font-weight: 700;
 }
 
 .admin-table td {
-  border-bottom: 1px solid var(--color-divider);
-  padding: 8px var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 8px var(--space-3);
   text-align: left;
-  vertical-align: top;
+  vertical-align: middle;
+  color: var(--text-primary);
 }
 
-.admin-table tbody tr:hover { background: color-mix(in srgb, var(--color-accent) 6%, transparent); }
+.admin-table tbody tr:hover {
+  background: #f8fafc;
+}
 
-.admin-table input { width: 100%; padding: 6px 8px; }
+.admin-table input {
+  width: 100%;
+  padding: 6px 10px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+}
+
+.admin-table input:focus {
+  border-color: var(--safran-blue);
+  box-shadow: 0 0 0 2px rgba(0, 85, 165, 0.15);
+}
 
 .admin-checkboxes label {
-  display: inline-block;
-  margin: 0 var(--space-3) var(--space-1) 0;
-  font-size: 0.85rem;
-  color: var(--color-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 var(--space-3) var(--space-2) 0;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  cursor: pointer;
 }
 
-fieldset { border: 1px solid var(--color-divider); border-radius: 0; margin-bottom: var(--space-3); padding: var(--space-3); }
-legend { font-size: 0.8rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.admin-checkboxes input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--safran-blue);
+}
+
+fieldset {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-3);
+  padding: var(--space-4);
+  background: #f8fafc;
+}
+
+legend {
+  font-family: var(--font-heading);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--safran-blue-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0 8px;
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}

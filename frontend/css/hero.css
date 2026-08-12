@@ -1,19 +1,26 @@
 /* Safran Data Systems — Catalogue Industriel
-   Écran d'accueil : le Cortex s'allume, le scroll zoome dans sa dalle jusqu'à révéler le
-   configurateur réel. Le contenu affiché dans l'écran n'est pas une maquette : c'est
-   #app-root (le configurateur qui existe plus bas dans le document), déplacé dans le
-   cadre puis rendu à sa place normale une fois le zoom terminé (voir js/hero.js).
-   Palette et typographies reprises telles quelles de style.css. */
+   Écran d'accueil : le Cortex s'allume (noir vers blanc), puis zoome en plein écran
+   pour révéler immédiatement le configurateur actif tout en haut de la page. */
 
-#intro { height: 430vh; position: relative; }
+#intro {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: hidden;
+  background: radial-gradient(120% 90% at 50% 46%, #1a2942 0%, #0d1726 45%, #080e18 100%);
+  transition: opacity 0.4s ease;
+}
+
+#intro.hero-dismissed {
+  opacity: 0;
+  pointer-events: none;
+}
 
 #stage {
-  position: sticky;
-  top: 0;
-  height: 100vh;
+  position: absolute;
+  inset: 0;
   overflow: hidden;
-  background:
-    radial-gradient(120% 90% at 50% 46%, var(--color-accent-800) 0%, var(--color-accent-900) 45%, #0e1822 100%);
+  cursor: pointer;
 }
 
 #glow {
@@ -22,9 +29,9 @@
   width: 150vmax; height: 150vmax;
   transform: translate(-50%, -50%);
   background: radial-gradient(closest-side,
-      color-mix(in srgb, var(--color-accent-300) 34%, transparent) 0%,
-      color-mix(in srgb, var(--color-accent-500) 16%, transparent) 32%,
-      color-mix(in srgb, var(--color-accent-700) 5%, transparent) 58%,
+      rgba(0, 85, 165, 0.4) 0%,
+      rgba(0, 150, 255, 0.2) 32%,
+      rgba(0, 85, 165, 0.08) 58%,
       transparent 74%);
   opacity: 0;
   mix-blend-mode: screen;
@@ -38,10 +45,6 @@ body.hero-boot-done #glow { transition: none; }
   left: 50%; top: 50%;
   width: var(--dev-w);
   height: calc(var(--dev-w) * var(--dev-ratio));
-  /* Le zoom (render() dans hero.js) fait tourner l'image autour du centre de la dalle,
-     pas du centre du boîtier : sans cette ancre, le navigateur utilise son origine par
-     défaut (50% 50% de #world), et le calcul de translate ne correspond plus — la dalle
-     dérive visiblement de l'écran au fil du zoom. */
   transform-origin: var(--anchor-x) var(--anchor-y);
   will-change: transform, opacity;
 }
@@ -56,11 +59,11 @@ body.hero-boot-done #glow { transition: none; }
   position: absolute;
   left: var(--s-x); top: var(--s-y);
   width: var(--s-w); height: var(--s-h);
-  box-shadow: 0 0 26px 10px color-mix(in srgb, var(--color-accent-300) 55%, transparent);
+  box-shadow: 0 0 35px 12px rgba(255, 255, 255, 0.6);
   opacity: 0;
   pointer-events: none;
 }
-body.hero-booted #bezel-bloom { opacity: 1; transition: opacity 1.4s ease 1.05s; }
+body.hero-booted #bezel-bloom { opacity: 1; transition: opacity 1.2s ease 1.05s; }
 body.hero-boot-done #bezel-bloom { transition: none; }
 
 #screen {
@@ -71,22 +74,19 @@ body.hero-boot-done #bezel-bloom { transition: none; }
   box-shadow:
     inset 0 0 0 1px rgba(0,0,0,.85),
     inset 0 0 24px rgba(0,0,0,.55);
+  transition: background-color 1.2s ease 0.6s;
 }
 
-/* Une fois le contenu "docke", #stage reste sticky (donc visuellement plein cadre) tant
-   que sa propre hauteur de defilement n'est pas epuisee : sans ce masquage, un rectangle
-   noir vide couvre l'ecran pendant tout ce defilement, avant que l'interface docke ne
-   devienne visible en dessous - percu comme une interface qui apparait deux fois. */
-body.hero-docked #stage { visibility: hidden; }
+body.hero-booted #screen {
+  background: #ffffff; /* L'écran s'allume en passant de noir à blanc lumineux */
+}
 
-/* Cadre à taille de page (vw × vh) : le vrai configurateur y est rendu à sa taille
-   normale, puis réduit par transform — net à l'arrivée puisque l'échelle vaut 1. */
+/* Cadre à taille de page (vw × vh) */
 #app-frame {
   position: absolute;
   left: 0; top: 0;
   transform-origin: 0 0;
   will-change: transform;
-  pointer-events: none; /* pendant le zoom seulement : le nœud quitte ce cadre une fois arrivé */
 }
 
 #app-frame > #app-root {
@@ -94,14 +94,15 @@ body.hero-docked #stage { visibility: hidden; }
   transform: scaleY(.985);
   filter: brightness(2.4) contrast(.35) saturate(.4);
 }
+
 body.hero-booted #app-frame > #app-root {
   animation: crt-in 1.15s cubic-bezier(.2,.7,.25,1) .62s forwards;
 }
-/* Une fois l'allumage joué, l'état final est figé sans transition : si le nœud revient
-   dans #app-frame (retour en arrière au scroll), il ne se rallume pas à chaque fois. */
+
 body.hero-boot-done #app-frame > #app-root {
   opacity: 1; transform: none; filter: none; animation: none;
 }
+
 @keyframes crt-in {
   0%   { opacity: 0; transform: scaleY(.985); filter: brightness(2.6) contrast(.3) saturate(.3); }
   35%  { opacity: 1; transform: scaleY(1.004); filter: brightness(1.5) contrast(.75) saturate(.7); }
@@ -112,12 +113,13 @@ body.hero-boot-done #app-frame > #app-root {
 #power-line {
   position: absolute;
   left: 0; right: 0; top: 50%;
-  height: 2px;
-  background: #eaf4ff;
-  box-shadow: 0 0 18px 5px color-mix(in srgb, var(--color-accent-200) 85%, transparent);
+  height: 3px;
+  background: #ffffff;
+  box-shadow: 0 0 25px 8px #ffffff;
   transform: translateY(-50%) scaleX(0);
   opacity: 0;
   pointer-events: none;
+  z-index: 10;
 }
 body.hero-booted #power-line { animation: power-line 900ms ease-out forwards; }
 @keyframes power-line {
@@ -128,7 +130,7 @@ body.hero-booted #power-line { animation: power-line 900ms ease-out forwards; }
   100% { opacity: 0; transform: translateY(-50%) scaleX(1);   }
 }
 
-#veil { position: absolute; inset: 0; background: #04060a; pointer-events: none; }
+#veil { position: absolute; inset: 0; background: #04060a; pointer-events: none; z-index: 5; }
 body.hero-booted #veil { animation: veil-out 700ms ease-out .55s forwards; }
 body.hero-boot-done #veil { opacity: 0; animation: none; }
 @keyframes veil-out { to { opacity: 0; } }
@@ -142,19 +144,8 @@ body.hero-boot-done #veil { opacity: 0; animation: none; }
       rgba(255,255,255,.05) 18%,
       transparent 42%),
     radial-gradient(115% 115% at 50% 50%,
-      transparent 52%, rgba(0,0,0,.42) 100%);
+      transparent 52%, rgba(0,0,0,.15) 100%);
 }
-#crt-flicker::after {
-  content: "";
-  position: absolute; inset: 0;
-  background: repeating-linear-gradient(
-      to bottom,
-      rgba(0,0,0,.20) 0px,
-      rgba(0,0,0,.20) 1px,
-      transparent 1px,
-      transparent 3px);
-}
-body.hero-booted #crt-flicker { animation: flicker 4.2s steps(1, end) infinite .9s; }
 
 #hint {
   position: absolute;
@@ -162,23 +153,23 @@ body.hero-booted #crt-flicker { animation: flicker 4.2s steps(1, end) infinite .
   transform: translateX(-50%);
   display: flex; flex-direction: column; align-items: center; gap: 12px;
   font-family: var(--font-heading);
-  font-size: 12px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase;
-  color: color-mix(in srgb, #fff 68%, transparent);
+  font-size: 12px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase;
+  color: #ffffff;
   opacity: 0;
-  pointer-events: none;
+  cursor: pointer;
+  z-index: 20;
 }
 body.hero-booted #hint { opacity: 1; transition: opacity .6s ease 1.9s; }
-body.hero-scrolled #hint { opacity: 0 !important; transition-delay: 0s; }
 #hint .mouse {
   width: 22px; height: 34px; border-radius: 12px;
-  border: 1px solid color-mix(in srgb, #fff 50%, transparent);
+  border: 2px solid #ffffff;
   position: relative;
 }
 #hint .mouse::after {
   content: "";
   position: absolute; left: 50%; top: 7px;
   width: 2px; height: 6px; border-radius: 2px;
-  background: color-mix(in srgb, #fff 82%, transparent);
+  background: #ffffff;
   transform: translateX(-50%);
   animation: wheel 1.7s ease-in-out infinite;
 }
@@ -195,6 +186,7 @@ body.hero-scrolled #hint { opacity: 0 !important; transition-delay: 0s; }
   text-align: center;
   pointer-events: none;
   opacity: 0;
+  z-index: 10;
 }
 body.hero-booted #tagline { opacity: var(--tagline-fade, 1); transition: opacity .9s ease 1.5s; }
 body.hero-boot-done #tagline { transition: none; }
@@ -213,21 +205,13 @@ body.hero-boot-done #tagline { transition: none; }
   font-weight: 600;
   letter-spacing: .18em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--color-accent-200) 92%, transparent);
+  color: rgba(255, 255, 255, 0.9);
 }
-
-/* Pendant le zoom, #app-root est réduit à l'échelle de la dalle : ses éléments
-   position:fixed (l'infobulle) seraient positionnés relativement au cadre transformé au
-   lieu du viewport. Sans conséquence : #app-frame reste pointer-events:none tant que le
-   nœud y séjourne, donc l'infobulle ne peut pas s'ouvrir à ce moment-là. */
 
 @media (prefers-reduced-motion: reduce) {
   #intro { display: none; }
 }
 
-/* La fiche imprimable (.export-sheet, dans #app-root) doit être la seule chose imprimée —
-   voir le bloc @media print de style.css, qui masque déjà brandbar/family-picker/etc.
-   mais ne connaît pas cette section, ajoutée après coup. */
 @media print {
   #intro { display: none; }
 }

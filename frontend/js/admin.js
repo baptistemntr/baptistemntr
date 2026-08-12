@@ -18,9 +18,11 @@ const el = {
   groupsList: document.getElementById("groups-list"),
   groupCreateForm: document.getElementById("group-create-form"),
   articlesBody: document.getElementById("articles-body"),
+  articlesSearch: document.getElementById("articles-search"),
   articleCreateForm: document.getElementById("article-create-form"),
   newArticleOptions: document.getElementById("new-article-options"),
   rulesBody: document.getElementById("rules-body"),
+  rulesSearch: document.getElementById("rules-search"),
   ruleCreateForm: document.getElementById("rule-create-form"),
   newRuleSource: document.getElementById("new-rule-source"),
   newRuleTarget: document.getElementById("new-rule-target"),
@@ -45,8 +47,6 @@ function licenseOptions() {
   return allOptions().filter((o) => o.kind === "license");
 }
 
-// CRT (FEP) calcule sa licence directement dans le code (resolver.build_fep_license), pas
-// via des mots/bits en base : créer un mot ici pour cette gamme n'aurait aucun effet.
 const NO_LICENSE_WORDS_FAMILY = "CRT";
 
 async function init() {
@@ -56,6 +56,31 @@ async function init() {
   el.articleCreateForm.addEventListener("submit", onCreateArticle);
   el.ruleCreateForm.addEventListener("submit", onCreateRule);
   el.licenseWordCreateForm.addEventListener("submit", onCreateLicenseWord);
+
+  el.articlesSearch?.addEventListener("input", filterArticles);
+  el.rulesSearch?.addEventListener("input", filterRules);
+}
+
+function filterArticles() {
+  const query = (el.articlesSearch?.value || "").toLowerCase().trim();
+  const rows = el.articlesBody.querySelectorAll("tr");
+  for (const row of rows) {
+    const text = row.textContent.toLowerCase();
+    const inputsText = Array.from(row.querySelectorAll("input"))
+      .map((i) => i.value)
+      .join(" ")
+      .toLowerCase();
+    row.hidden = query !== "" && !text.includes(query) && !inputsText.includes(query);
+  }
+}
+
+function filterRules() {
+  const query = (el.rulesSearch?.value || "").toLowerCase().trim();
+  const rows = el.rulesBody.querySelectorAll("tr");
+  for (const row of rows) {
+    const text = row.textContent.toLowerCase();
+    row.hidden = query !== "" && !text.includes(query);
+  }
 }
 
 async function onLogin(event) {
@@ -107,8 +132,7 @@ function render() {
   renderRules();
 }
 
-// --- Gamme -------------------------------------------------------------------------------
-
+// --- Gamme ---
 async function onSaveFamily(event) {
   event.preventDefault();
   await runOrAlert(() =>
@@ -120,8 +144,7 @@ async function onSaveFamily(event) {
   await loadFamily();
 }
 
-// --- Licences (mots/bits, HDR et SATCORE — pas CRT, voir NO_LICENSE_WORDS_FAMILY) -------
-
+// --- Licences ---
 function renderLicensePanel() {
   if (!state.family.has_license) {
     el.licensePanel.hidden = true;
@@ -199,9 +222,6 @@ async function onCreateLicenseWord(event) {
   await loadFamily();
 }
 
-// Un bit est soit piloté par une ou plusieurs options (OU), soit figé (VRAI/FAUX constant,
-// ex. les bits toujours inclus de SATCORE), soit non calculable (raison expliquée plutôt
-// que compté silencieusement à 0) — jamais deux à la fois, voir LicenseBit dans models.py.
 function bitMode(bit) {
   if (bit.constant_value === true) return "constant_true";
   if (bit.constant_value === false) return "constant_false";
@@ -345,8 +365,7 @@ function renderLicenseBitCreateForm(word) {
   return details;
 }
 
-// --- Groupes et options --------------------------------------------------------------------
-
+// --- Groupes et options ---
 function renderGroups() {
   el.groupsList.innerHTML = "";
   for (const group of state.family.groups) {
@@ -538,14 +557,14 @@ function wrapLabel(text, inputEl) {
   return label;
 }
 
-// --- Grille (articles) ---------------------------------------------------------------------
-
+// --- Grille (articles) ---
 function renderArticles() {
   el.articlesBody.innerHTML = "";
   for (const article of state.family.articles) {
     el.articlesBody.appendChild(renderArticleRow(article));
   }
   renderOptionCheckboxes(el.newArticleOptions, []);
+  filterArticles();
 }
 
 function renderArticleRow(article) {
@@ -651,8 +670,7 @@ async function onCreateArticle(event) {
   await loadFamily();
 }
 
-// --- Règles de compatibilité -----------------------------------------------------------
-
+// --- Règles de compatibilité ---
 function renderRules() {
   el.rulesBody.innerHTML = "";
   const optionsById = new Map(allOptions().map((o) => [o.id, o]));
@@ -680,6 +698,7 @@ function renderRules() {
     el.newRuleSource.appendChild(new Option(text, option.id));
     el.newRuleTarget.appendChild(new Option(text, option.id));
   }
+  filterRules();
 }
 
 async function onDeleteRule(rule) {
@@ -703,8 +722,7 @@ async function onCreateRule(event) {
   await loadFamily();
 }
 
-// --- Utilitaire ---------------------------------------------------------------------------
-
+// --- Utilitaire ---
 async function runOrAlert(action) {
   try {
     return await action();
