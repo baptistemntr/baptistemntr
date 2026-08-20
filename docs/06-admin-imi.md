@@ -100,6 +100,34 @@ Le point de dépose se comprend comme « juste avant l'encadré ciblé » — gl
 dernier encadré nécessite de le déposer sur l'avant-dernier puis de réajuster, il n'y a pas
 de zone de dépose dédiée en toute fin de liste.
 
+### Comparaison à la liste de vente Agile
+
+Le panneau « Comparaison à la liste de vente Agile » (`catalogue.sale_list_check`,
+`GET /api/admin/families/{code}/sale-list-check`) répond à un besoin remonté par l'IMI :
+repérer les articles de la grille qui ne sont plus vendus côté Agile (souvent une évolution
+ou une obsolescence). Point de départ de l'exploration : l'article Agile `S113472`
+(« LISTE VENTE PRODUITS LES ULIS », classe 10000 comme un article normal) recense, via sa
+propre nomenclature (BOM), une sous-liste par gamme (ex. `S113459` = « LISTE PRODUITS
+CRT ») — chacune listant à son tour les vrais codes articles actuellement vendus. Voir
+`tools/discover_agile.py --find-list-tables` / `--bom-of` pour rejouer cette exploration.
+
+La comparaison cherche les listes Agile dont la désignation commence par
+« LISTE PRODUITS `<code de la gamme>` » (aucun champ Agile ne relie formellement une liste
+à une gamme, seule la désignation saisie à la main le fait — même limite que pour la
+création de gamme, voir plus haut). Une gamme peut avoir plusieurs listes (HDR en a 3 :
+PCC, 4G, 4GPLUS) — union-nées. Les sous-listes imbriquées (ex. « LISTE PRODUITS CRT PCC
+SECU », trouvée dans la nomenclature de la liste CRT) sont dépliées automatiquement plutôt
+que comptées comme un article manquant. **Les listes trouvées sont toujours affichées** :
+le nom de gamme Agile ne recoupe pas toujours exactement le nôtre (ex. notre `RSR-RF`
+s'appelle juste « RSR » côté Agile), donc si aucune liste ne correspond ou si la mauvaise
+liste est trouvée, c'est visible immédiatement plutôt que de fausser silencieusement le
+résultat.
+
+Un article de grille absent de l'union de ces listes est signalé, jamais supprimé
+automatiquement — même philosophie que la vérification BOM (`docs/07-verification-
+nomenclature-bom.md`) : une absence est à vérifier au cas par cas avec l'IMI avant toute
+correction de grille.
+
 ### Licences (mots/bits)
 
 HDR et SATCORE stockent leur licence en base (`LicenseWord`/`LicenseBit`, la même somme

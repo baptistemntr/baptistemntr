@@ -29,6 +29,8 @@ const el = {
   newRuleTarget: document.getElementById("new-rule-target"),
   bomCheckRun: document.getElementById("bom-check-run"),
   bomCheckResult: document.getElementById("bom-check-result"),
+  saleListCheckRun: document.getElementById("sale-list-check-run"),
+  saleListCheckResult: document.getElementById("sale-list-check-result"),
   createFamilyPanel: document.getElementById("create-family-panel"),
   familyCreateForm: document.getElementById("family-create-form"),
   newFamilyCode: document.getElementById("new-family-code"),
@@ -73,6 +75,7 @@ async function init() {
   el.articlesSearch?.addEventListener("input", filterArticles);
   el.rulesSearch?.addEventListener("input", filterRules);
   el.bomCheckRun?.addEventListener("click", onCheckBom);
+  el.saleListCheckRun?.addEventListener("click", onCheckSaleList);
   el.familyCreateForm?.addEventListener("submit", onCreateFamily);
   el.deleteFamilyBtn?.addEventListener("click", onDeleteFamily);
   el.agileArticleSearchInput?.addEventListener("input", onAgileArticleSearchInput);
@@ -177,6 +180,7 @@ function render() {
   renderArticles();
   renderRules();
   if (el.bomCheckResult) el.bomCheckResult.innerHTML = "";
+  if (el.saleListCheckResult) el.saleListCheckResult.innerHTML = "";
 }
 
 // --- Gamme ---
@@ -984,6 +988,67 @@ function renderBomCheckResult(discrepancies) {
   }
   table.appendChild(tbody);
   el.bomCheckResult.appendChild(table);
+}
+
+// --- Comparaison à la liste de vente Agile ---
+async function onCheckSaleList() {
+  el.saleListCheckRun.disabled = true;
+  el.saleListCheckResult.innerHTML = "";
+  const pending = el_("div", "message", "Comparaison en cours (appel Snowflake)...");
+  el.saleListCheckResult.appendChild(pending);
+  try {
+    const result = await adminApi.checkSaleList(state.familyCode);
+    renderSaleListCheckResult(result);
+  } catch (error) {
+    el.saleListCheckResult.innerHTML = "";
+    const box = el_("div", "message message-error",
+      error.messages ? error.messages.join(" ") : String(error));
+    el.saleListCheckResult.appendChild(box);
+  } finally {
+    el.saleListCheckRun.disabled = false;
+  }
+}
+
+function renderSaleListCheckResult(result) {
+  el.saleListCheckResult.innerHTML = "";
+
+  if (result.note) {
+    el.saleListCheckResult.appendChild(el_("div", "message message-warning", result.note));
+    return;
+  }
+
+  const listsText = result.sale_lists
+    .map((l) => `${l.item_number}${l.description ? " — " + l.description : ""}`)
+    .join(" ; ");
+  el.saleListCheckResult.appendChild(el_("div", "message",
+    `Liste(s) Agile comparée(s) : ${listsText}`));
+
+  if (result.missing.length === 0) {
+    el.saleListCheckResult.appendChild(el_("div", "message message-success",
+      "Tous les articles de la grille figurent dans la liste de vente Agile."));
+    return;
+  }
+
+  const notice = el_("div", "message message-warning",
+    `${result.missing.length} article(s) de la grille absent(s) de la liste de vente Agile ` +
+    "— généralement une évolution/obsolescence côté Agile, à vérifier au cas par cas.");
+  el.saleListCheckResult.appendChild(notice);
+
+  const table = document.createElement("table");
+  table.className = "bom-check-table";
+  const thead = document.createElement("thead");
+  thead.innerHTML = "<tr><th>Article</th><th>Désignation</th></tr>";
+  table.appendChild(thead);
+
+  const tbody = document.createElement("tbody");
+  for (const m of result.missing) {
+    const row = document.createElement("tr");
+    row.appendChild(el_("td", null, m.item_number));
+    row.appendChild(el_("td", null, m.designation || ""));
+    tbody.appendChild(row);
+  }
+  table.appendChild(tbody);
+  el.saleListCheckResult.appendChild(table);
 }
 
 // --- Utilitaire ---

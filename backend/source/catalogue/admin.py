@@ -33,7 +33,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
-from catalogue import bom_check, snowflake_client
+from catalogue import bom_check, sale_list_check, snowflake_client
 from catalogue.database import SessionLocal
 from catalogue.models import (
     Article, ArticleMapping, LicenseBit, LicenseWord, Option, OptionGroup, OptionRule,
@@ -64,6 +64,7 @@ from catalogue.schemas import (
     AdminRuleOut,
     AgileArticleOut,
     BomDiscrepancyOut,
+    SaleListCheckOut,
     FamilyOut,
 )
 
@@ -350,6 +351,25 @@ def check_family_bom(code: str) -> list[BomDiscrepancyOut]:
             status_code=503, detail="Identifiants Snowflake absents de l'environnement."
         )
     return [BomDiscrepancyOut(**d) for d in bom_check.check_family(code)]
+
+
+@router.get("/families/{code}/sale-list-check", response_model=SaleListCheckOut)
+def check_family_sale_list(code: str) -> SaleListCheckOut:
+    """Compare la grille de la gamme à la liste de vente officielle Agile — voir
+    sale_list_check.py. Même contrat que bom-check : appelle Snowflake en direct, jamais de
+    suppression automatique, un article signalé est à vérifier par l'IMI (souvent une
+    évolution/obsolescence côté Agile, mais pas garanti).
+    """
+    session = _session()
+    try:
+        _get_family(session, code)  # 404 propre si la gamme n'existe pas
+    finally:
+        session.close()
+    if not snowflake_client.is_configured():
+        raise HTTPException(
+            status_code=503, detail="Identifiants Snowflake absents de l'environnement."
+        )
+    return SaleListCheckOut(**sale_list_check.check_family(code))
 
 
 @router.put("/families/{code}", response_model=AdminFamilyDetailOut)

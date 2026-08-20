@@ -222,6 +222,29 @@ class BomDiscrepancyOut(BaseModel):
     actual_components: list[BomComponentOut]
 
 
+class SaleListOut(BaseModel):
+    """Une liste de vente Agile trouvée pour la gamme (ex. S113459, « LISTE PRODUITS CRT »)
+    — voir catalogue.sale_list_check. Toujours affichée, pour que l'IMI vérifie que c'est
+    bien la bonne liste avant de lire les écarts."""
+
+    item_number: str
+    description: str | None = None
+
+
+class SaleListMissingOut(BaseModel):
+    """Un article de la grille absent de la liste de vente Agile — voir
+    catalogue.sale_list_check."""
+
+    item_number: str
+    designation: str | None = None
+
+
+class SaleListCheckOut(BaseModel):
+    sale_lists: list[SaleListOut]
+    missing: list[SaleListMissingOut]
+    note: str | None = None
+
+
 class AdminRuleOut(BaseModel):
     id: int
     family_code: str
