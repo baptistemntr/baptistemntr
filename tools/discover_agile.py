@@ -223,6 +223,32 @@ TLA_SAMPLE_QUERY = """
     LIMIT 30
 """
 
+# Piste non testée : ITEM.CATEGORY (résolu en CATEGORY_LABEL via LISTENTRY, déjà utilisé par
+# agile_sync.ARTICLES_QUERY -> Article.category) est un champ distinct de PRODUCT_LINES,
+# jamais vérifié pour la granularité gamme (CRT/HDR/SATCORE). Contrairement au préfixe de
+# DESCRIPTION (fiable sur 4/6 seulement) et à IS_TLA (vide), CATEGORY est une vraie colonne
+# de classification Agile — reste à voir si ses valeurs distinctes ressemblent à des gammes
+# ou sont aussi larges que PRODUCT_LINES (ex. « ARC S&C »).
+CATEGORY_DISTRIBUTION_QUERY = """
+    SELECT le_cat.ENTRYVALUE AS CATEGORY_LABEL, COUNT(*) AS N
+    FROM ITEM i
+    LEFT JOIN LISTENTRY le_cat
+           ON le_cat.ENTRYID = i.CATEGORY AND le_cat.LANGID = 3
+    WHERE i.CLASS = 10000
+      AND (i.DELETE_FLAG IS NULL OR i.DELETE_FLAG != 1)
+    GROUP BY le_cat.ENTRYVALUE
+    ORDER BY N DESC
+    LIMIT 60
+"""
+
+CATEGORY_KNOWN_ITEMS_QUERY = """
+    SELECT i.ITEM_NUMBER, i.DESCRIPTION, le_cat.ENTRYVALUE AS CATEGORY_LABEL
+    FROM ITEM i
+    LEFT JOIN LISTENTRY le_cat
+           ON le_cat.ENTRYID = i.CATEGORY AND le_cat.LANGID = 3
+    WHERE i.ITEM_NUMBER IN ({item_numbers})
+"""
+
 # Sert à vérifier une hypothèse pour une future détection d'incohérences grille ↔ Agile
 # (docs/01-contexte-et-besoin.md) : Option.component_item_number (ex. S128865 pour l'option
 # C0 de CRT) doit apparaître dans la nomenclature réelle de l'article que la grille associe
@@ -306,6 +332,12 @@ def main() -> None:
              "distribution des valeurs, IS_TLA des 6 articles de gamme connus, échantillon "
              "de désignations parmi IS_TLA=1.",
     )
+    parser.add_argument(
+        "--probe-category", action="store_true",
+        help="Teste si ITEM.CATEGORY (résolu en CATEGORY_LABEL, déjà utilisé par "
+             "Article.category) recoupe la granularité gamme : distribution des libellés "
+             "distincts, CATEGORY_LABEL des 6 articles de gamme connus.",
+    )
     args = parser.parse_args()
 
     if not os.getenv("SNOWFLAKE_USER"):
@@ -343,6 +375,13 @@ def main() -> None:
                  fetch_all(conn, TLA_KNOWN_ITEMS_QUERY.format(item_numbers=known)))
             show("Échantillon aléatoire de 30 désignations parmi IS_TLA=1",
                  fetch_all(conn, TLA_SAMPLE_QUERY))
+            return
+        if args.probe_category:
+            show("Distribution de CATEGORY_LABEL (classe 10000)",
+                 fetch_all(conn, CATEGORY_DISTRIBUTION_QUERY))
+            known = "'S110647', 'S100683', 'S100681', 'S128362', 'S135963', 'S122464'"
+            show("CATEGORY_LABEL des 6 articles de gamme connus",
+                 fetch_all(conn, CATEGORY_KNOWN_ITEMS_QUERY.format(item_numbers=known)))
             return
         if args.find_text:
             query, verb = (FIND_EXACT_QUERY, "égal à") if args.exact else (FIND_TEXT_QUERY, "contenant")
