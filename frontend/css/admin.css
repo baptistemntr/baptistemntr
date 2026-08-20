@@ -429,6 +429,34 @@
   font-size: 0.88rem;
 }
 
+/* Colonne « Article » : les 4 champs empilés plutôt qu'à côté les uns des autres, pour
+   qu'ils gardent une largeur lisible même quand la colonne Options prend beaucoup de
+   place (nombreuses cases à cocher sur des gammes comme HDR). */
+.admin-article-fields {
+  min-width: 200px;
+  vertical-align: top;
+}
+
+.admin-article-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+
+.admin-article-field:last-child {
+  margin-bottom: 0;
+}
+
+.admin-article-field span {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
 .admin-table input:focus {
   border-color: var(--safran-blue);
   box-shadow: 0 0 0 2px rgba(0, 85, 165, 0.15);

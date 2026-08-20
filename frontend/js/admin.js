@@ -579,10 +579,12 @@ function renderArticleRow(article) {
   const refInput = tableInput(article.commercial_ref || "");
   const priceInput = tableInput(article.standard_price ?? "", "number");
 
-  row.appendChild(wrapCell(itemInput));
-  row.appendChild(wrapCell(designationInput));
-  row.appendChild(wrapCell(refInput));
-  row.appendChild(wrapCell(priceInput));
+  const fieldsCell = el_("td", "admin-article-fields");
+  fieldsCell.appendChild(labeledField("Code Agile", itemInput));
+  fieldsCell.appendChild(labeledField("Désignation", designationInput));
+  fieldsCell.appendChild(labeledField("Réf. commerciale", refInput));
+  fieldsCell.appendChild(labeledField("Prix standard", priceInput));
+  row.appendChild(fieldsCell);
 
   const optionsCell = document.createElement("td");
   const checkboxContainer = el_("div", "admin-checkboxes");
@@ -620,10 +622,11 @@ function tableInput(value, type = "text") {
   return input;
 }
 
-function wrapCell(inputEl) {
-  const cell = document.createElement("td");
-  cell.appendChild(inputEl);
-  return cell;
+function labeledField(labelText, inputEl) {
+  const label = el_("label", "admin-article-field");
+  label.appendChild(el_("span", null, labelText));
+  label.appendChild(inputEl);
+  return label;
 }
 
 function renderOptionCheckboxes(container, checkedOptionIds, options = gridOptions()) {
