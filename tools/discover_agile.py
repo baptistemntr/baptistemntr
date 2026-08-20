@@ -324,6 +324,29 @@ BOM_FOR_ITEM_QUERY = """
     ORDER BY b.SEQ
 """
 
+# S113472 (« LISTE VENTE PRODUITS LES ULIS ») est un objet Agile de classe « List », pas un
+# article classe 10000 comme le reste du catalogue — sa fiche ITEM (si elle existe côté ID)
+# ne porte probablement pas de BOM au sens classique. Piste : comparer cette liste de vente
+# officielle à nos articles catalogue pour repérer ceux qui n'y figurent plus (souvent
+# obsolètes ou remplacés par une évolution) — complémentaire de la vérification BOM
+# existante (catalogue.bom_check), qui vérifie la composition, pas la présence à la vente.
+LIST_ITEM_LOOKUP_QUERY = """
+    SELECT ID, CLASS, ITEM_NUMBER, DESCRIPTION, DELETE_FLAG
+    FROM ITEM
+    WHERE ITEM_NUMBER = '{item_number}'
+"""
+
+# Cherche les tables candidates pour la composition d'une liste (membres), en évitant
+# LISTENTRY (déjà connue : résolution de libellés ENTRYID, pas composition d'une liste).
+LIST_MEMBER_TABLES_QUERY = """
+    SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'AGILE'
+      AND (TABLE_NAME ILIKE '%LIST%' OR COLUMN_NAME ILIKE '%MEMBER%')
+      AND TABLE_NAME NOT IN ('LISTENTRY')
+    ORDER BY TABLE_NAME, COLUMN_NAME
+"""
+
 
 def show(title: str, rows: list[dict]) -> None:
     print(f"\n=== {title} ===")
@@ -408,6 +431,13 @@ def main() -> None:
              "brute ITEM.SUBCLASS (sans jointure LANGID=3) pour cet article, puis cherche "
              "son ENTRYID dans LISTENTRY toute langue confondue.",
     )
+    parser.add_argument(
+        "--find-list-tables",
+        help="Première étape pour comparer une liste de vente Agile (ex. S113472, "
+             "« LISTE VENTE PRODUITS LES ULIS ») à nos articles catalogue : affiche la fiche "
+             "ITEM de l'article donné (classe, description) puis cherche les tables "
+             "candidates pour la composition d'une liste (membres).",
+    )
     args = parser.parse_args()
 
     if not os.getenv("SNOWFLAKE_USER"):
@@ -476,6 +506,12 @@ def main() -> None:
             else:
                 print("\n=== LISTENTRY pour ces ENTRYID, toute langue ===")
                 print("(ITEM.SUBCLASS est NULL pour tous ces articles — pas un problème de jointure)")
+            return
+        if args.find_list_tables:
+            show(f"Fiche ITEM de {args.find_list_tables}",
+                 fetch_all(conn, LIST_ITEM_LOOKUP_QUERY.format(item_number=args.find_list_tables)))
+            show("Tables candidates pour la composition d'une liste (membres)",
+                 fetch_all(conn, LIST_MEMBER_TABLES_QUERY))
             return
         if args.find_text:
             query, verb = (FIND_EXACT_QUERY, "égal à") if args.exact else (FIND_TEXT_QUERY, "contenant")
