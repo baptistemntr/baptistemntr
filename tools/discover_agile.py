@@ -11,8 +11,12 @@ Sert à répondre à des questions ouvertes du cadrage :
 3. La jointure CATEGORY/PRODUCT_LINES d'`agile_sync.ARTICLES_QUERY` renvoie-t-elle des
    libellés sensés, ou `NULL` silencieux partout ? (`--preview-sync`) — à vérifier avant
    tout premier `POST /api/sync` réel.
+4. La nomenclature (BOM) d'un article contient-elle bien les composants attendus des
+   options cochées pour lui dans la grille ? (`--bom-of`) — prépare une détection
+   d'incohérences grille ↔ Agile, voir docs/01-contexte-et-besoin.md.
 
     python3 tools/discover_agile.py --item-number S1234567
+    python3 tools/discover_agile.py --bom-of S128354
 
 Sans argument, le script liste les colonnes de la table ITEM et les ATTID les plus
 fréquents sur les articles.
@@ -188,6 +192,24 @@ LIFECYCLE_COLUMNS_QUERY = """
     ORDER BY TABLE_NAME, COLUMN_NAME
 """
 
+# Sert à vérifier une hypothèse pour une future détection d'incohérences grille ↔ Agile
+# (docs/01-contexte-et-besoin.md) : Option.component_item_number (ex. S128865 pour l'option
+# C0 de CRT) doit apparaître dans la nomenclature réelle de l'article que la grille associe
+# à cette option (ex. S128354 = CRT, C0 + 4U). BOM.ITEM_NUMBER porte directement le code du
+# parent (pas de jointure nécessaire côté parent, contrairement à AGILE_FLEX) ; BOM.COMPONENT
+# est l'ID interne de l'enfant, à résoudre via ITEM.ID. CHANGE_OUT = 0 signale la ligne
+# active : les nomenclatures sont historisées via ECO, une ligne remplacée reste en base.
+BOM_FOR_ITEM_QUERY = """
+    SELECT
+        b.FIND_NUMBER, b.SEQ, b.QUANTITY,
+        comp.ITEM_NUMBER AS COMPONENT_ITEM_NUMBER, comp.DESCRIPTION AS COMPONENT_DESCRIPTION
+    FROM BOM b
+    JOIN ITEM comp ON comp.ID = b.COMPONENT
+    WHERE b.ITEM_NUMBER = '{item_number}'
+      AND b.CHANGE_OUT = 0
+    ORDER BY b.SEQ
+"""
+
 
 def show(title: str, rows: list[dict]) -> None:
     print(f"\n=== {title} ===")
@@ -236,6 +258,12 @@ def main() -> None:
              "langue), et si ITEM.LATEST_RELEASED_ECO/DEFAULT_CHANGE mène à un statut via "
              "CHANGE — deux hypothèses concurrentes après l'échec de la jointure LANGID=3.",
     )
+    parser.add_argument(
+        "--bom-of",
+        help="Liste la nomenclature active (BOM, CHANGE_OUT=0) d'un article, composant par "
+             "composant — pour vérifier la correspondance avec Option.component_item_number "
+             "(ex. S128354 doit contenir S128865, le composant de l'option C0 côté CRT).",
+    )
     args = parser.parse_args()
 
     if not os.getenv("SNOWFLAKE_USER"):
@@ -258,6 +286,10 @@ def main() -> None:
                  fetch_all(conn, RELEASE_TYPE_RAW_QUERY))
             show(f"CHANGE lié à {args.probe_lifecycle} via LATEST_RELEASED_ECO/DEFAULT_CHANGE",
                  fetch_all(conn, CHANGE_LOOKUP_QUERY, item_number=args.probe_lifecycle))
+            return
+        if args.bom_of:
+            show(f"Nomenclature active (BOM) de {args.bom_of}",
+                 fetch_all(conn, BOM_FOR_ITEM_QUERY, item_number=args.bom_of))
             return
         if args.find_text:
             query, verb = (FIND_EXACT_QUERY, "égal à") if args.exact else (FIND_TEXT_QUERY, "contenant")
