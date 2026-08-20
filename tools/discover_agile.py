@@ -54,6 +54,21 @@ ITEM_LOOKUP_QUERY = """
     WHERE ITEM_NUMBER = '{item_number}'
 """
 
+# L'écran Agile affiche un champ « Subclass » (ex. « Finished Good » pour S138833) distinct
+# de « Product Group » (déjà identifié comme ITEM.CATEGORY, écarté par --probe-category) et
+# de CLASS (déjà utilisé pour filtrer 10000 partout). S'il isole vraiment les articles
+# finis/vendables des pièces brutes et qu'il est rempli — contrairement à IS_TLA, entièrement
+# NULL — ça fiabiliserait l'extraction de préfixe de gamme depuis DESCRIPTION en réduisant le
+# bruit, même si ça ne réglera pas le problème de nommage HDR/SATCORE (CORTEX/SATEL.MODEM).
+SUBCLASS_COLUMN_SEARCH_QUERY = """
+    SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE
+    FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = 'AGILE'
+      AND (COLUMN_NAME ILIKE '%SUBCLASS%' OR COLUMN_NAME ILIKE '%SUB_CLASS%'
+           OR COLUMN_NAME ILIKE '%FINISHED%')
+    ORDER BY TABLE_NAME, COLUMN_NAME
+"""
+
 # REV porte ses propres champs personnalisés en colonnes génériques (TEXT01..15,
 # LIST01..25...), un système distinct d'AGILE_FLEX. La référence commerciale peut être
 # rangée là plutôt que dans AGILE_FLEX — à vérifier en lisant les TEXTxx d'une révision.
@@ -338,6 +353,12 @@ def main() -> None:
              "Article.category) recoupe la granularité gamme : distribution des libellés "
              "distincts, CATEGORY_LABEL des 6 articles de gamme connus.",
     )
+    parser.add_argument(
+        "--find-subclass-column", action="store_true",
+        help="Cherche la colonne SQL derrière le champ « Subclass » affiché dans l'écran "
+             "Agile (ex. « Finished Good ») — première étape avant de tester si elle "
+             "isole mieux les articles finis qu'IS_TLA (entièrement vide).",
+    )
     args = parser.parse_args()
 
     if not os.getenv("SNOWFLAKE_USER"):
@@ -382,6 +403,10 @@ def main() -> None:
             known = "'S110647', 'S100683', 'S100681', 'S128362', 'S135963', 'S122464'"
             show("CATEGORY_LABEL des 6 articles de gamme connus",
                  fetch_all(conn, CATEGORY_KNOWN_ITEMS_QUERY.format(item_numbers=known)))
+            return
+        if args.find_subclass_column:
+            show("Colonnes évoquant Subclass / Finished Good",
+                 fetch_all(conn, SUBCLASS_COLUMN_SEARCH_QUERY))
             return
         if args.find_text:
             query, verb = (FIND_EXACT_QUERY, "égal à") if args.exact else (FIND_TEXT_QUERY, "contenant")
