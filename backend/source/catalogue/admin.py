@@ -246,24 +246,31 @@ def create_family(payload: AdminFamilyCreate) -> AdminFamilyDetailOut:
 
 
 @router.get("/agile-articles", response_model=list[AgileArticleOut])
-def search_agile_articles(q: str) -> list[AgileArticleOut]:
+def search_agile_articles(q: str, finished_only: bool = False) -> list[AgileArticleOut]:
     """Recherche dans le miroir local Agile déjà synchronisé (pas d'appel Snowflake ici,
     contrairement à bom-check) — aide à repérer les articles d'une gamme qui n'a pas encore
     de grille, ex. juste après avoir créé une gamme vide.
+
+    `finished_only` restreint aux articles finis (`Article.is_finished_good`, voir
+    agile_sync.FINISHED_GOOD_SUBCLASS) — utilisé par le formulaire de création de gamme pour
+    suggérer un code depuis la désignation d'un article fini, en évitant le bruit des ~120k
+    pièces brutes (vis, câbles...) qui composent la classe 10000.
     """
     if len(q.strip()) < 2:
         raise HTTPException(status_code=422, detail="Recherche trop courte (2 caractères minimum).")
     session = _session()
     try:
         pattern = f"%{q.strip()}%"
+        query = session.query(Article).filter(or_(
+            Article.item_number.ilike(pattern),
+            Article.description.ilike(pattern),
+            Article.category.ilike(pattern),
+            Article.product_line.ilike(pattern),
+        ))
+        if finished_only:
+            query = query.filter(Article.is_finished_good.is_(True))
         articles = (
-            session.query(Article)
-            .filter(or_(
-                Article.item_number.ilike(pattern),
-                Article.description.ilike(pattern),
-                Article.category.ilike(pattern),
-                Article.product_line.ilike(pattern),
-            ))
+            query
             .order_by(Article.item_number)
             .limit(50)
             .all()

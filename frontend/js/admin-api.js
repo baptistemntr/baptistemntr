@@ -50,8 +50,11 @@ const adminApi = {
     }),
   deleteFamily: (code) =>
     adminRequest(`/api/admin/families/${encodeURIComponent(code)}`, { method: "DELETE" }),
-  searchAgileArticles: (q) =>
-    adminRequest(`/api/admin/agile-articles?q=${encodeURIComponent(q)}`),
+  searchAgileArticles: (q, finishedOnly = false) =>
+    adminRequest(
+      `/api/admin/agile-articles?q=${encodeURIComponent(q)}` +
+      (finishedOnly ? "&finished_only=true" : "")
+    ),
   listAgileProductLines: () => adminRequest("/api/admin/agile-product-lines"),
 
   createGroup: (payload) =>

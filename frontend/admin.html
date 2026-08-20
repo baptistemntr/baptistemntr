@@ -54,6 +54,17 @@
         <option value="">— Choisir une ligne produit Agile —</option>
       </select>
     </label>
+    <div class="agile-article-search">
+      <label>Ou rechercher un article Agile fini par désignation, pour suggérer un code (ex. « digitizer »)
+        <input type="search" id="new-family-article-search-input" placeholder="ex. Digitizer, S1...">
+      </label>
+      <p class="admin-panel-hint" style="margin: 4px 0 0;">
+        Suggestion à partir du premier segment de la désignation — fiable pour la plupart des
+        gammes (ex. « CRT-Q-EXT-4U » → CRT), pas pour toutes (HDR/SATCORE portent un nom
+        commercial différent du code de gamme) : à corriger à la main si besoin.
+      </p>
+      <div id="new-family-article-search-results"></div>
+    </div>
     <label>Code technique (fixe une fois créé, ex. DIGITIZER)
       <input type="text" id="new-family-code" required>
     </label>
@@ -208,7 +219,7 @@
 </main>
 
 <script src="js/api.js?v=2"></script>
-<script src="js/admin-api.js?v=7"></script>
-<script src="js/admin.js?v=9"></script>
+<script src="js/admin-api.js?v=8"></script>
+<script src="js/admin.js?v=10"></script>
 </body>
 </html>

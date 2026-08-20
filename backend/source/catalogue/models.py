@@ -26,6 +26,12 @@ class Article(Base):
     product_line: Mapped[str | None] = mapped_column(String(255))
     category: Mapped[str | None] = mapped_column(String(255))
     lifecycle: Mapped[str | None] = mapped_column(String(64))
+    # ITEM.SUBCLASS = 2472645 sur les 7 articles finis connus (tools/discover_agile.py
+    # --probe-subclass-raw), contrairement à IS_TLA (toujours NULL). Pas résolvable en
+    # libellé humain via LISTENTRY (aucune entrée pour cet ENTRYID) — comparaison directe
+    # à la valeur numérique. Sert uniquement à filtrer le bruit avant suggestion de code de
+    # gamme (agile_sync.py, admin.py) ; None si le champ Agile lui-même est vide.
+    is_finished_good: Mapped[bool | None] = mapped_column(Boolean)
     last_sync: Mapped[datetime | None] = mapped_column(DateTime)
 
 

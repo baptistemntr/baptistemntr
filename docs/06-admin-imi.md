@@ -64,22 +64,27 @@ les lignes produit Agile distinctes du miroir local, triées par nombre d'articl
 parcourir ce qui existe côté Agile avant de nommer une gamme. **Ce n'est pas une liste de
 gammes prêtes à créer** : Agile n'a aucune notion de « gamme » comparable à CRT/HDR/SATCORE,
 seulement des lignes produit internes (ex. `550 = ARC S&C`) qui ne recoupent pas cette
-granularité. Une piste alternative (extraire un préfixe de gamme depuis
-`ITEM.DESCRIPTION`, ex. `CRT-Q-EXT-4U` → `CRT`) a été testée et écartée : sur 6 articles de
-référence connus, seuls 4 avaient un préfixe exploitable (CRT, DTR, RSR-RF, WBR) — HDR et
-SATCORE portent un nom commercial Agile différent du code de gamme (`CORTEX`,
-`SATEL.MODEM`). La colonne `ITEM.IS_TLA` (« Top Level Assembly »), qui aurait pu isoler les
-articles finis des pièces brutes avant extraction, s'est révélée entièrement vide
-(`NULL` sur les 119 975 articles de la classe 10000) — aucun filtre disponible pour cette
-piste. Une dernière piste, `ITEM.CATEGORY` (résolu en `CATEGORY_LABEL`, déjà utilisé pour
-`Article.category`), a aussi été écartée : c'est une classification de fabrication
-(« SM00A = Assembly », « SC02C = Mechanical Part - Machining »...), pas une classification
-produit — les 6 articles de référence connus retombent tous sur la même valeur
-(`SM00A = Assembly`), sans aucune différenciation entre gammes. **Quatre pistes Agile
-indépendantes testées (product_line, préfixe DESCRIPTION, IS_TLA, CATEGORY), aucune ne
-porte la notion de gamme** : c'est une catégorisation propre au catalogue, absente d'Agile,
-qui reste donc de la connaissance métier à saisir manuellement à la création d'une gamme.
-Voir `tools/discover_agile.py --probe-tla` / `--probe-category` pour rejouer ces tests.
+granularité — confirmé par quatre pistes Agile testées indépendamment (`product_line`,
+préfixe de `ITEM.DESCRIPTION`, `ITEM.IS_TLA`, `ITEM.CATEGORY`), aucune ne portant la notion
+de gamme. `ITEM.IS_TLA` (« Top Level Assembly »), censé isoler les articles finis des
+pièces brutes, s'est révélé entièrement vide (`NULL` sur les 119 975 articles de la classe
+10000). `ITEM.CATEGORY` (résolu en `CATEGORY_LABEL`, déjà utilisé pour `Article.category`)
+est une classification de fabrication (« SM00A = Assembly »...), pas produit : les 6
+articles de référence connus y retombent tous sur la même valeur. Voir
+`tools/discover_agile.py --probe-tla` / `--probe-category` pour rejouer ces deux tests.
+
+**Suggestion de code à la création**, malgré tout : un troisième champ (« rechercher un
+article Agile fini par désignation ») interroge le miroir local filtré sur
+`Article.is_finished_good` (`GET /api/admin/agile-articles?finished_only=true`) — ce
+booléen vient d'`ITEM.SUBCLASS = 2472645`, valeur trouvée par
+`tools/discover_agile.py --probe-subclass-raw` sur les 7 articles finis de référence connus
+(pas résolvable en libellé humain via `LISTENTRY`, comparaison à la valeur numérique brute ;
+voir `agile_sync.FINISHED_GOOD_SUBCLASS`) et — contrairement à `IS_TLA` — bien rempli.
+Cliquer un résultat pré-remplit le code technique avec le premier segment de la désignation
+(`CRT-Q-EXT-4U` → `CRT`) et le libellé avec la désignation complète. **C'est une suggestion,
+jamais appliquée sans relecture** : fiable sur la plupart des gammes, pas sur celles au nom
+commercial Agile différent du code (HDR → `CORTEX`, SATCORE → `SATEL.MODEM`) — l'IMI reste
+toujours libre de corriger avant de valider le formulaire.
 
 ### Licences (mots/bits)
 

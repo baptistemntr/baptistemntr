@@ -14,6 +14,12 @@ from catalogue.snowflake_client import connect, fetch_all
 # Classe Agile des articles (« Pièces »). Les documents (9000) ne concernent pas le catalogue.
 ITEM_CLASS_PART = 10000
 
+# Valeur d'ITEM.SUBCLASS trouvée sur les 7 articles finis de référence connus
+# (tools/discover_agile.py --probe-subclass-raw), pas résolvable en libellé via LISTENTRY
+# (aucune entrée pour cet ENTRYID) — d'où la comparaison à la valeur numérique brute plutôt
+# qu'à un libellé. IS_TLA, censé porter la même distinction, s'est révélé entièrement vide.
+FINISHED_GOOD_SUBCLASS = 2472645
+
 # ATTID de l'attribut AGILE_FLEX portant la référence commerciale.
 # À renseigner une fois identifié avec tools/discover_agile.py.
 COMMERCIAL_REF_ATTID = os.getenv("AGILE_COMMERCIAL_REF_ATTID", "")
@@ -25,6 +31,7 @@ ARTICLES_QUERY = f"""
         i.ID            AS ITEM_ID,
         i.ITEM_NUMBER   AS ITEM_NUMBER,
         i.DESCRIPTION   AS DESCRIPTION,
+        i.SUBCLASS      AS SUBCLASS,
         le_cat.ENTRYVALUE AS CATEGORY_LABEL,
         le_pl.ENTRYVALUE  AS PRODUCT_LINE_LABEL
     FROM ITEM i
@@ -76,6 +83,8 @@ def sync_articles() -> dict:
             article.description = row.get("DESCRIPTION")
             article.category = row.get("CATEGORY_LABEL")
             article.product_line = row.get("PRODUCT_LINE_LABEL")
+            subclass = row.get("SUBCLASS")
+            article.is_finished_good = subclass == FINISHED_GOOD_SUBCLASS if subclass is not None else None
             article.commercial_ref = refs.get(str(int(row["ITEM_ID"]))) or article.commercial_ref
             # article.lifecycle n'est jamais renseigné : trois pistes explorées sans succès
             # (VERSION.LIFECYCLEPHASE, REV.RELEASE_TYPE, CHANGE.STATUSTYPE — voir

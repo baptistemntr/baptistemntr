@@ -38,6 +38,8 @@ const el = {
   agileArticleSearchInput: document.getElementById("agile-article-search-input"),
   agileArticleSearchResults: document.getElementById("agile-article-search-results"),
   agileProductLineSelect: document.getElementById("agile-product-line-select"),
+  newFamilyArticleSearchInput: document.getElementById("new-family-article-search-input"),
+  newFamilyArticleSearchResults: document.getElementById("new-family-article-search-results"),
 };
 
 function el_(tag, className, text) {
@@ -76,6 +78,7 @@ async function init() {
   el.deleteFamilyBtn?.addEventListener("click", onDeleteFamily);
   el.agileProductLineSelect?.addEventListener("change", onAgileProductLineSelected);
   el.agileArticleSearchInput?.addEventListener("input", onAgileArticleSearchInput);
+  el.newFamilyArticleSearchInput?.addEventListener("input", onNewFamilyArticleSearchInput);
 }
 
 function filterArticles() {
@@ -227,6 +230,58 @@ function onAgileProductLineSelected() {
   // technique reste à la charge de l'IMI, il doit suivre la convention maison (majuscules,
   // sans espace) qu'on ne peut pas deviner depuis la nomenclature Agile.
   el.newFamilyLabel.value = value.replace(/^\d+\s*=\s*/, "").trim();
+}
+
+// Premier segment de la désignation (avant espace ou tiret) — fiable sur des cas comme
+// « CRT-Q-EXT-4U » → CRT, pas sur ceux où le nom commercial Agile diffère du code de gamme
+// (« CORTEX HDR - 3DEC FULL 2U » → CORTEX au lieu de HDR) : juste une suggestion éditable,
+// jamais appliquée sans relecture (voir docs/06-admin-imi.md § Créer une gamme).
+function suggestFamilyCodeFromDescription(description) {
+  if (!description) return "";
+  return (description.trim().split(/[\s-]+/)[0] || "").toUpperCase();
+}
+
+let newFamilyArticleSearchTimeout = null;
+
+function onNewFamilyArticleSearchInput() {
+  clearTimeout(newFamilyArticleSearchTimeout);
+  const q = el.newFamilyArticleSearchInput.value.trim();
+  el.newFamilyArticleSearchResults.innerHTML = "";
+  if (q.length < 2) return;
+  newFamilyArticleSearchTimeout = setTimeout(() => runNewFamilyArticleSearch(q), 300);
+}
+
+async function runNewFamilyArticleSearch(q) {
+  let results;
+  try {
+    results = await adminApi.searchAgileArticles(q, true);
+  } catch (error) {
+    el.newFamilyArticleSearchResults.innerHTML = "";
+    el.newFamilyArticleSearchResults.appendChild(el_("div", "message message-error",
+      error.messages ? error.messages.join(" ") : String(error)));
+    return;
+  }
+
+  el.newFamilyArticleSearchResults.innerHTML = "";
+  if (results.length === 0) {
+    el.newFamilyArticleSearchResults.appendChild(el_("div", "message",
+      "Aucun article fini trouvé dans le miroir local pour cette recherche."));
+    return;
+  }
+  for (const article of results) {
+    const row = el_("button", "agile-article-result");
+    row.type = "button";
+    row.textContent = article.description
+      ? `${article.item_number} — ${article.description}`
+      : article.item_number;
+    row.addEventListener("click", () => {
+      el.newFamilyCode.value = suggestFamilyCodeFromDescription(article.description);
+      if (!el.newFamilyLabel.value) el.newFamilyLabel.value = article.description || "";
+      el.newFamilyArticleSearchResults.innerHTML = "";
+      el.newFamilyArticleSearchInput.value = "";
+    });
+    el.newFamilyArticleSearchResults.appendChild(row);
+  }
 }
 
 // --- Licences ---
