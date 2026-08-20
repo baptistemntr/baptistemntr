@@ -26,6 +26,8 @@ const el = {
   ruleCreateForm: document.getElementById("rule-create-form"),
   newRuleSource: document.getElementById("new-rule-source"),
   newRuleTarget: document.getElementById("new-rule-target"),
+  bomCheckRun: document.getElementById("bom-check-run"),
+  bomCheckResult: document.getElementById("bom-check-result"),
 };
 
 function el_(tag, className, text) {
@@ -59,6 +61,7 @@ async function init() {
 
   el.articlesSearch?.addEventListener("input", filterArticles);
   el.rulesSearch?.addEventListener("input", filterRules);
+  el.bomCheckRun?.addEventListener("click", onCheckBom);
 }
 
 function filterArticles() {
@@ -130,6 +133,7 @@ function render() {
   renderGroups();
   renderArticles();
   renderRules();
+  if (el.bomCheckResult) el.bomCheckResult.innerHTML = "";
 }
 
 // --- Gamme ---
@@ -720,6 +724,78 @@ async function onCreateRule(event) {
   );
   event.target.reset();
   await loadFamily();
+}
+
+// --- Vérification nomenclature Agile (BOM) ---
+async function onCheckBom() {
+  el.bomCheckRun.disabled = true;
+  el.bomCheckResult.innerHTML = "";
+  const pending = el_("div", "message", "Vérification en cours (appel Snowflake)...");
+  el.bomCheckResult.appendChild(pending);
+  try {
+    const discrepancies = await adminApi.checkBom(state.familyCode);
+    renderBomCheckResult(discrepancies);
+  } catch (error) {
+    el.bomCheckResult.innerHTML = "";
+    const box = el_("div", "message message-error",
+      error.messages ? error.messages.join(" ") : String(error));
+    el.bomCheckResult.appendChild(box);
+  } finally {
+    el.bomCheckRun.disabled = false;
+  }
+}
+
+function renderBomCheckResult(discrepancies) {
+  el.bomCheckResult.innerHTML = "";
+
+  if (discrepancies.length === 0) {
+    el.bomCheckResult.appendChild(el_("div", "message message-success",
+      "Aucun écart : tous les composants attendus (options avec un code article connu) " +
+      "apparaissent dans la nomenclature Agile réelle des articles correspondants."));
+    return;
+  }
+
+  const notice = el_("div", "message message-warning",
+    `${discrepancies.length} écart(s) trouvé(s) — à relire au cas par cas, un composant ` +
+    "peut légitimement varier selon une autre option cochée (ex. le châssis).");
+  el.bomCheckResult.appendChild(notice);
+
+  const table = document.createElement("table");
+  table.className = "bom-check-table";
+  const thead = document.createElement("thead");
+  thead.innerHTML =
+    "<tr><th>Article</th><th>Option</th><th>Composant attendu</th><th>Nomenclature réelle</th></tr>";
+  table.appendChild(thead);
+
+  const tbody = document.createElement("tbody");
+  for (const d of discrepancies) {
+    const row = document.createElement("tr");
+
+    const articleCell = el_("td", null,
+      `${d.item_number}${d.designation ? " — " + d.designation : ""}`);
+    row.appendChild(articleCell);
+
+    row.appendChild(el_("td", null, `${d.option_caption} — ${d.option_label}`));
+
+    const expectedCell = document.createElement("td");
+    expectedCell.appendChild(el_("code", null, d.expected_component));
+    row.appendChild(expectedCell);
+
+    const actualCell = document.createElement("td");
+    if (d.actual_components.length === 0) {
+      actualCell.appendChild(el_("span", null, "(nomenclature vide ou introuvable)"));
+    } else {
+      for (const code of d.actual_components) {
+        actualCell.appendChild(el_("code", null, code));
+        actualCell.appendChild(document.createTextNode(" "));
+      }
+    }
+    row.appendChild(actualCell);
+
+    tbody.appendChild(row);
+  }
+  table.appendChild(tbody);
+  el.bomCheckResult.appendChild(table);
 }
 
 // --- Utilitaire ---

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Catalogue Industriel — Espace IMI</title>
 <link rel="stylesheet" href="css/style.css?v=15">
-<link rel="stylesheet" href="css/admin.css?v=15">
+<link rel="stylesheet" href="css/admin.css?v=16">
 </head>
 <body>
 
@@ -125,6 +125,22 @@
     </details>
   </section>
 
+  <!-- Vérification nomenclature Agile (BOM) -->
+  <section class="admin-panel">
+    <div class="admin-panel-head">
+      <h2>Vérification nomenclature Agile (BOM)</h2>
+      <button type="button" id="bom-check-run">Lancer la vérification</button>
+    </div>
+    <p class="admin-panel-hint">
+      Compare, pour les articles de cette gamme, le composant Agile attendu de chaque
+      option cochée avec la nomenclature réelle de l'article dans Snowflake. Un écart
+      signalé n'est pas forcément une erreur de grille — un composant peut légitimement
+      varier selon une autre option cochée à côté (ex. le châssis) ; à vérifier au cas par
+      cas avant correction.
+    </p>
+    <div id="bom-check-result"></div>
+  </section>
+
   <!-- Règles de compatibilité -->
   <section class="admin-panel">
     <div class="admin-panel-head">
@@ -157,7 +173,7 @@
 </main>
 
 <script src="js/api.js?v=2"></script>
-<script src="js/admin-api.js?v=3"></script>
-<script src="js/admin.js?v=4"></script>
+<script src="js/admin-api.js?v=4"></script>
+<script src="js/admin.js?v=5"></script>
 </body>
 </html>

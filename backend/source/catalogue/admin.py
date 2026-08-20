@@ -27,6 +27,7 @@ import secrets
 from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
+from catalogue import bom_check, snowflake_client
 from catalogue.database import SessionLocal
 from catalogue.models import (
     ArticleMapping, LicenseBit, LicenseWord, Option, OptionGroup, OptionRule, ProductFamily,
@@ -52,6 +53,7 @@ from catalogue.schemas import (
     AdminOptionUpdate,
     AdminRuleCreate,
     AdminRuleOut,
+    BomDiscrepancyOut,
     FamilyOut,
 )
 
@@ -231,6 +233,28 @@ def get_family(code: str) -> AdminFamilyDetailOut:
         )
     finally:
         session.close()
+
+
+@router.get("/families/{code}/bom-check", response_model=list[BomDiscrepancyOut])
+def check_family_bom(code: str) -> list[BomDiscrepancyOut]:
+    """Compare la grille de la gamme à la nomenclature Agile réelle — voir bom_check.py.
+
+    Appelle Snowflake en direct à chaque appel (pas de miroir local pour le BOM,
+    contrairement aux articles) : un résultat vide peut vouloir dire soit « rien à
+    signaler », soit « aucune option de cette gamme ne porte de component_item_number »
+    (aujourd'hui la majorité) — les deux se distinguent par le contenu du rapport, jamais
+    par une alerte silencieuse.
+    """
+    session = _session()
+    try:
+        _get_family(session, code)  # 404 propre si la gamme n'existe pas
+    finally:
+        session.close()
+    if not snowflake_client.is_configured():
+        raise HTTPException(
+            status_code=503, detail="Identifiants Snowflake absents de l'environnement."
+        )
+    return [BomDiscrepancyOut(**d) for d in bom_check.check_family(code)]
 
 
 @router.put("/families/{code}", response_model=AdminFamilyDetailOut)

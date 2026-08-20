@@ -121,6 +121,45 @@
   line-height: 1.5;
 }
 
+.admin-panel-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: var(--space-4);
+}
+
+.bom-check-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin-top: var(--space-3);
+}
+
+.bom-check-table th {
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-medium);
+  padding: 6px 10px 6px 0;
+}
+
+.bom-check-table td {
+  padding: 8px 10px 8px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: top;
+  color: var(--text-primary);
+}
+
+.bom-check-table code {
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  background: var(--bg-surface-3);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
 /* Barre de Recherche Admin */
 .admin-search-input {
   background: #ffffff;
