@@ -205,6 +205,11 @@ class AdminArticleUpdate(BaseModel):
     option_ids: list[int] = []
 
 
+class BomComponentOut(BaseModel):
+    item_number: str
+    description: str | None = None
+
+
 class BomDiscrepancyOut(BaseModel):
     """Une option dont le composant Agile attendu n'apparaît pas dans la nomenclature
     réelle de l'article que la grille lui associe — voir catalogue.bom_check."""
@@ -213,8 +218,8 @@ class BomDiscrepancyOut(BaseModel):
     designation: str | None = None
     option_caption: str
     option_label: str
-    expected_component: str
-    actual_components: list[str]
+    expected_component: BomComponentOut
+    actual_components: list[BomComponentOut]
 
 
 class AdminRuleOut(BaseModel):

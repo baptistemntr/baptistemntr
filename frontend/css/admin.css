@@ -160,6 +160,14 @@
   border-radius: 3px;
 }
 
+.bom-check-component {
+  margin-bottom: 4px;
+}
+
+.bom-check-component:last-child {
+  margin-bottom: 0;
+}
+
 /* Barre de Recherche Admin */
 .admin-search-input {
   background: #ffffff;

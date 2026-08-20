@@ -745,6 +745,23 @@ async function onCheckBom() {
   }
 }
 
+function componentListCell(components) {
+  const cell = document.createElement("td");
+  if (components.length === 0) {
+    cell.appendChild(el_("span", null, "(nomenclature vide ou introuvable)"));
+    return cell;
+  }
+  for (const c of components) {
+    const line = el_("div", "bom-check-component");
+    line.appendChild(el_("code", null, c.item_number));
+    if (c.description) {
+      line.appendChild(document.createTextNode(" — " + c.description));
+    }
+    cell.appendChild(line);
+  }
+  return cell;
+}
+
 function renderBomCheckResult(discrepancies) {
   el.bomCheckResult.innerHTML = "";
 
@@ -777,20 +794,8 @@ function renderBomCheckResult(discrepancies) {
 
     row.appendChild(el_("td", null, `${d.option_caption} — ${d.option_label}`));
 
-    const expectedCell = document.createElement("td");
-    expectedCell.appendChild(el_("code", null, d.expected_component));
-    row.appendChild(expectedCell);
-
-    const actualCell = document.createElement("td");
-    if (d.actual_components.length === 0) {
-      actualCell.appendChild(el_("span", null, "(nomenclature vide ou introuvable)"));
-    } else {
-      for (const code of d.actual_components) {
-        actualCell.appendChild(el_("code", null, code));
-        actualCell.appendChild(document.createTextNode(" "));
-      }
-    }
-    row.appendChild(actualCell);
+    row.appendChild(componentListCell([d.expected_component]));
+    row.appendChild(componentListCell(d.actual_components));
 
     tbody.appendChild(row);
   }
