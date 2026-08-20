@@ -265,16 +265,6 @@ class AgileArticleOut(BaseModel):
     category: str | None = None
 
 
-class AgileProductLineOut(BaseModel):
-    """Une ligne produit Agile distincte, avec son nombre d'articles dans le miroir local —
-    pour parcourir ce qui existe côté Agile avant de créer une gamme. Ne présume pas qu'une
-    ligne produit correspond à une gamme du catalogue : la nomenclature Agile (ex.
-    « 550 = ARC S&C ») ne recoupe pas forcément celle des gammes existantes (CRT, HDR...)."""
-
-    product_line: str
-    article_count: int
-
-
 # `constant_value` prime sur `option_ids` quand renseigné (bit figé, ex. SATCORE) ; sinon
 # le bit vaut VRAI si au moins une des options listées est retenue (OR) ; ni l'un ni
 # l'autre : `unmapped_reason` explique pourquoi le bit n'est pas calculable (ex. dépend

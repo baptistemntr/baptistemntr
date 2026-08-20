@@ -55,7 +55,6 @@ const adminApi = {
       `/api/admin/agile-articles?q=${encodeURIComponent(q)}` +
       (finishedOnly ? "&finished_only=true" : "")
     ),
-  listAgileProductLines: () => adminRequest("/api/admin/agile-product-lines"),
 
   createGroup: (payload) =>
     adminRequest("/api/admin/groups", {

@@ -59,21 +59,20 @@ déjà synchronisé (`Article`, alimenté par `POST /api/sync` — pas d'appel S
 pré-remplit le code article, la désignation et la référence commerciale du formulaire
 d'ajout de ligne de grille — les options embarquées restent à cocher à la main.
 
-Un second menu (« Créer une nouvelle gamme », `GET /api/admin/agile-product-lines`) liste
-les lignes produit Agile distinctes du miroir local, triées par nombre d'articles — pour
-parcourir ce qui existe côté Agile avant de nommer une gamme. **Ce n'est pas une liste de
-gammes prêtes à créer** : Agile n'a aucune notion de « gamme » comparable à CRT/HDR/SATCORE,
-seulement des lignes produit internes (ex. `550 = ARC S&C`) qui ne recoupent pas cette
-granularité — confirmé par quatre pistes Agile testées indépendamment (`product_line`,
-préfixe de `ITEM.DESCRIPTION`, `ITEM.IS_TLA`, `ITEM.CATEGORY`), aucune ne portant la notion
-de gamme. `ITEM.IS_TLA` (« Top Level Assembly »), censé isoler les articles finis des
-pièces brutes, s'est révélé entièrement vide (`NULL` sur les 119 975 articles de la classe
-10000). `ITEM.CATEGORY` (résolu en `CATEGORY_LABEL`, déjà utilisé pour `Article.category`)
-est une classification de fabrication (« SM00A = Assembly »...), pas produit : les 6
-articles de référence connus y retombent tous sur la même valeur. Voir
-`tools/discover_agile.py --probe-tla` / `--probe-category` pour rejouer ces deux tests.
+Agile n'a aucune notion de « gamme » comparable à CRT/HDR/SATCORE — confirmé par quatre
+pistes testées indépendamment (`product_line`, la nomenclature interne Agile type
+`550 = ARC S&C` qui ne recoupe pas cette granularité ; préfixe de `ITEM.DESCRIPTION` ;
+`ITEM.IS_TLA` ; `ITEM.CATEGORY`), aucune ne portant la notion de gamme. `ITEM.IS_TLA`
+(« Top Level Assembly »), censé isoler les articles finis des pièces brutes, s'est révélé
+entièrement vide (`NULL` sur les 119 975 articles de la classe 10000). `ITEM.CATEGORY`
+(résolu en `CATEGORY_LABEL`, déjà utilisé pour `Article.category`) est une classification
+de fabrication (« SM00A = Assembly »...), pas produit : les 6 articles de référence connus
+y retombent tous sur la même valeur. Voir `tools/discover_agile.py --probe-tla` /
+`--probe-category` pour rejouer ces deux tests. (Un menu de navigation par ligne produit
+Agile, `GET /api/admin/agile-product-lines`, a existé un temps sur cette base — retiré une
+fois la suggestion ci-dessous en place, plus utile pour le même besoin.)
 
-**Suggestion de code à la création**, malgré tout : un troisième champ (« rechercher un
+**Suggestion de code à la création**, malgré tout : un second champ (« rechercher un
 article Agile fini par désignation ») interroge le miroir local filtré sur
 `Article.is_finished_good` (`GET /api/admin/agile-articles?finished_only=true`) — ce
 booléen vient d'`ITEM.SUBCLASS = 2472645`, valeur trouvée par

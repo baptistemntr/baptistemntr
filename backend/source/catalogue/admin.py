@@ -62,7 +62,6 @@ from catalogue.schemas import (
     AdminRuleCreate,
     AdminRuleOut,
     AgileArticleOut,
-    AgileProductLineOut,
     BomDiscrepancyOut,
     FamilyOut,
 )
@@ -276,28 +275,6 @@ def search_agile_articles(q: str, finished_only: bool = False) -> list[AgileArti
             .all()
         )
         return [AgileArticleOut.model_validate(a, from_attributes=True) for a in articles]
-    finally:
-        session.close()
-
-
-@router.get("/agile-product-lines", response_model=list[AgileProductLineOut])
-def list_agile_product_lines() -> list[AgileProductLineOut]:
-    """Liste les lignes produit Agile distinctes du miroir local, avec leur nombre
-    d'articles — pour parcourir ce qui existe côté Agile avant de créer une gamme. Voir le
-    docstring d'AgileProductLineOut : ne pas présumer une correspondance 1-pour-1 avec les
-    gammes existantes.
-    """
-    session = _session()
-    try:
-        rows = (
-            session.query(Article.product_line, func.count(Article.item_number))
-            .filter(Article.product_line.isnot(None))
-            .group_by(Article.product_line)
-            .order_by(func.count(Article.item_number).desc())
-            .limit(200)
-            .all()
-        )
-        return [AgileProductLineOut(product_line=pl, article_count=n) for pl, n in rows]
     finally:
         session.close()
 
