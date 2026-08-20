@@ -43,7 +43,17 @@
     sélectionnée — comme pour une gamme existante. Agile ne connaît que les articles, pas
     la configuration qui les relie : cette partie reste toujours une saisie manuelle.
   </p>
+  <p class="admin-panel-hint">
+    La nomenclature Agile (ex. « 550 = ARC S&amp;C ») ne correspond pas forcément à une
+    gamme du catalogue — le menu ci-dessous aide à repérer ce qui existe côté Agile, ce
+    n'est pas une liste de gammes à créer telle quelle.
+  </p>
   <form id="family-create-form">
+    <label>Parcourir les lignes produit déjà connues d'Agile (facultatif, aide à pré-remplir)
+      <select id="agile-product-line-select">
+        <option value="">— Choisir une ligne produit Agile —</option>
+      </select>
+    </label>
     <label>Code technique (fixe une fois créé, ex. DIGITIZER)
       <input type="text" id="new-family-code" required>
     </label>
@@ -198,7 +208,7 @@
 </main>
 
 <script src="js/api.js?v=2"></script>
-<script src="js/admin-api.js?v=6"></script>
-<script src="js/admin.js?v=8"></script>
+<script src="js/admin-api.js?v=7"></script>
+<script src="js/admin.js?v=9"></script>
 </body>
 </html>

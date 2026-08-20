@@ -52,6 +52,7 @@ const adminApi = {
     adminRequest(`/api/admin/families/${encodeURIComponent(code)}`, { method: "DELETE" }),
   searchAgileArticles: (q) =>
     adminRequest(`/api/admin/agile-articles?q=${encodeURIComponent(q)}`),
+  listAgileProductLines: () => adminRequest("/api/admin/agile-product-lines"),
 
   createGroup: (payload) =>
     adminRequest("/api/admin/groups", {

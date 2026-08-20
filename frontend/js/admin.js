@@ -37,6 +37,7 @@ const el = {
   createFamilyMessage: document.getElementById("create-family-message"),
   agileArticleSearchInput: document.getElementById("agile-article-search-input"),
   agileArticleSearchResults: document.getElementById("agile-article-search-results"),
+  agileProductLineSelect: document.getElementById("agile-product-line-select"),
 };
 
 function el_(tag, className, text) {
@@ -73,6 +74,7 @@ async function init() {
   el.bomCheckRun?.addEventListener("click", onCheckBom);
   el.familyCreateForm?.addEventListener("submit", onCreateFamily);
   el.deleteFamilyBtn?.addEventListener("click", onDeleteFamily);
+  el.agileProductLineSelect?.addEventListener("change", onAgileProductLineSelected);
   el.agileArticleSearchInput?.addEventListener("input", onAgileArticleSearchInput);
 }
 
@@ -107,6 +109,7 @@ async function onLogin(event) {
     el.loginPanel.hidden = true;
     if (el.createFamilyPanel) el.createFamilyPanel.hidden = false;
     renderFamilyPicker(families);
+    loadAgileProductLines();
   } catch (error) {
     clearAdminAuth();
     el.loginError.textContent = error.messages ? error.messages.join(" ") : String(error);
@@ -200,6 +203,30 @@ async function onCreateFamily(event) {
   el.createFamilyMessage.appendChild(el_("div", "message message-success",
     `Gamme « ${payload.code} » créée. Vous pouvez maintenant y ajouter des groupes ` +
     "d'options, des options et des lignes de grille ci-dessous."));
+}
+
+async function loadAgileProductLines() {
+  if (!el.agileProductLineSelect) return;
+  let lines;
+  try {
+    lines = await adminApi.listAgileProductLines();
+  } catch (error) {
+    return; // Pas bloquant : le formulaire de création reste utilisable sans ce menu d'aide.
+  }
+  for (const entry of lines) {
+    el.agileProductLineSelect.appendChild(
+      new Option(`${entry.product_line} (${entry.article_count})`, entry.product_line)
+    );
+  }
+}
+
+function onAgileProductLineSelected() {
+  const value = el.agileProductLineSelect.value;
+  if (!value) return;
+  // Nettoie un préfixe numérique type « 550 = » pour un libellé plus lisible ; le code
+  // technique reste à la charge de l'IMI, il doit suivre la convention maison (majuscules,
+  // sans espace) qu'on ne peut pas deviner depuis la nomenclature Agile.
+  el.newFamilyLabel.value = value.replace(/^\d+\s*=\s*/, "").trim();
 }
 
 // --- Licences ---
