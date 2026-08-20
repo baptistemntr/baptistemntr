@@ -195,17 +195,22 @@ LIFECYCLE_COLUMNS_QUERY = """
 # Sert à vérifier une hypothèse pour une future détection d'incohérences grille ↔ Agile
 # (docs/01-contexte-et-besoin.md) : Option.component_item_number (ex. S128865 pour l'option
 # C0 de CRT) doit apparaître dans la nomenclature réelle de l'article que la grille associe
-# à cette option (ex. S128354 = CRT, C0 + 4U). BOM.ITEM_NUMBER porte directement le code du
-# parent (pas de jointure nécessaire côté parent, contrairement à AGILE_FLEX) ; BOM.COMPONENT
-# est l'ID interne de l'enfant, à résoudre via ITEM.ID. CHANGE_OUT = 0 signale la ligne
-# active : les nomenclatures sont historisées via ECO, une ligne remplacée reste en base.
+# à cette option (ex. S128354 = CRT, C0 + 4U). BOM.ITEM (numérique) est le parent, à
+# résoudre via ITEM.ID — PAS BOM.ITEM_NUMBER, qui pointe vers un autre article : une
+# première version de cette requête filtrant sur BOM.ITEM_NUMBER = 'S128354' a renvoyé une
+# unique ligne auto-référente (composant = S128354 lui-même), signe que la colonne
+# identifie en réalité la ligne où S128354 est *utilisé comme composant* d'un autre
+# article, pas sa propre composition. BOM.COMPONENT est l'ID interne de l'enfant, à
+# résoudre via ITEM.ID lui aussi. CHANGE_OUT = 0 signale la ligne active : les
+# nomenclatures sont historisées via ECO, une ligne remplacée reste en base.
 BOM_FOR_ITEM_QUERY = """
     SELECT
         b.FIND_NUMBER, b.SEQ, b.QUANTITY,
         comp.ITEM_NUMBER AS COMPONENT_ITEM_NUMBER, comp.DESCRIPTION AS COMPONENT_DESCRIPTION
     FROM BOM b
+    JOIN ITEM parent ON parent.ID = b.ITEM
     JOIN ITEM comp ON comp.ID = b.COMPONENT
-    WHERE b.ITEM_NUMBER = '{item_number}'
+    WHERE parent.ITEM_NUMBER = '{item_number}'
       AND b.CHANGE_OUT = 0
     ORDER BY b.SEQ
 """
