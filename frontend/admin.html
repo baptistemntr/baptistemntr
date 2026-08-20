@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Catalogue Industriel — Espace IMI</title>
 <link rel="stylesheet" href="css/style.css?v=15">
-<link rel="stylesheet" href="css/admin.css?v=17">
+<link rel="stylesheet" href="css/admin.css?v=18">
 </head>
 <body>
 
@@ -32,6 +32,27 @@
 </section>
 
 <nav id="admin-family-picker" class="family-picker" style="max-width: 1100px; margin: var(--space-4) auto;" aria-label="Choix de la gamme" hidden></nav>
+
+<section id="create-family-panel" class="admin-panel" hidden style="max-width: 1100px; margin: 0 auto var(--space-6);">
+  <div class="admin-panel-head">
+    <h2>Créer une nouvelle gamme</h2>
+  </div>
+  <p class="admin-panel-hint">
+    Crée une gamme vide (code, libellé, description). Les groupes d'options, les options et
+    la grille se saisissent ensuite dans les écrans ci-dessous une fois la gamme
+    sélectionnée — comme pour une gamme existante. Agile ne connaît que les articles, pas
+    la configuration qui les relie : cette partie reste toujours une saisie manuelle.
+  </p>
+  <form id="family-create-form">
+    <label>Code technique (fixe une fois créé, ex. DIGITIZER)
+      <input type="text" id="new-family-code" required>
+    </label>
+    <label>Libellé <input type="text" id="new-family-label" required></label>
+    <label>Description <textarea id="new-family-description" rows="2"></textarea></label>
+    <button type="submit">Créer la gamme</button>
+  </form>
+  <div id="create-family-message"></div>
+</section>
 
 <main id="admin-content" hidden>
 
@@ -111,6 +132,12 @@
     </table>
     <details class="admin-add">
       <summary>+ Ajouter une ligne de grille (Article standard)</summary>
+      <div class="agile-article-search">
+        <label>Rechercher un article Agile déjà synchronisé (code, désignation, ligne produit...)
+          <input type="search" id="agile-article-search-input" placeholder="ex. Digitizer, S1...">
+        </label>
+        <div id="agile-article-search-results"></div>
+      </div>
       <form id="article-create-form">
         <label>Code article Agile <input type="text" id="new-article-item"></label>
         <label>Désignation <input type="text" id="new-article-designation"></label>
@@ -170,7 +197,7 @@
 </main>
 
 <script src="js/api.js?v=2"></script>
-<script src="js/admin-api.js?v=4"></script>
-<script src="js/admin.js?v=6"></script>
+<script src="js/admin-api.js?v=5"></script>
+<script src="js/admin.js?v=7"></script>
 </body>
 </html>

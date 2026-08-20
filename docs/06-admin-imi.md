@@ -1,9 +1,10 @@
 # Espace IMI (administration)
 
-> Toutes les gammes sont éditables, y compris les mots/bits de licence de HDR et SATCORE.
-> Pas de création de gamme, pas d'édition de la licence CRT (codée en dur, pas en base).
-> Voir `docs/02-architecture.md` § 2 pour la place de cet espace dans l'architecture
-> générale.
+> Toutes les gammes sont éditables, y compris les mots/bits de licence de HDR et SATCORE,
+> et une nouvelle gamme peut être créée directement depuis l'écran (coquille vide — voir
+> § « Créer une gamme » plus bas). Pas d'édition de la licence CRT (codée en dur, pas en
+> base). Voir `docs/02-architecture.md` § 2 pour la place de cet espace dans
+> l'architecture générale.
 
 ## Historique : validé d'abord sur une gamme pilote
 
@@ -20,11 +21,12 @@ liste désormais les 19 gammes, dans le même ordre que l'espace commercial.
 
 | Éditable | Non éditable |
 |---|---|
-| Libellé et description de la gamme | Création d'une nouvelle gamme |
-| Groupes d'options (libellé, section, aide) | `OptionGroup.code` après création |
-| Options (libellé, définition technique) | `Option.caption` après création |
-| Grille (créer/modifier/supprimer une ligne) | Modification d'une règle existante (recréer) |
-| Règles de compatibilité (créer/supprimer) | Licence CRT (codée en dur, voir plus bas) |
+| Création d'une gamme (coquille vide) | `ProductFamily.code` après création |
+| Libellé et description de la gamme | `OptionGroup.code` après création |
+| Groupes d'options (libellé, section, aide) | `Option.caption` après création |
+| Options (libellé, définition technique) | Modification d'une règle existante (recréer) |
+| Grille (créer/modifier/supprimer une ligne) | Licence CRT (codée en dur, voir plus bas) |
+| Règles de compatibilité (créer/supprimer) | |
 | Mots/bits de licence HDR et SATCORE | |
 
 Deux champs sont volontairement figés après création : `OptionGroup.code` et
@@ -34,6 +36,28 @@ retoucher toute la grille casse silencieusement la résolution, exactement le pr
 documenté pour le classeur Excel lui-même. Le libellé commercial (`Option.label`), lui,
 s'édite librement — c'est le point réellement demandé (vocabulaire technique du classeur,
 ex. `CRT_options_panneau`, cf. README).
+
+### Créer une gamme
+
+Un formulaire (« Créer une nouvelle gamme », affiché juste sous le sélecteur de gamme,
+avant même d'en avoir choisi une) crée une `ProductFamily` vide : code technique, libellé,
+description. Le code se fixe à la création, comme `OptionGroup.code`/`Option.caption` — même
+raison, c'est une clé stable. La gamme créée est automatiquement sélectionnée pour
+continuer directement sur ses groupes, options et grille.
+
+**Ce que ça ne fait pas** : groupes d'options, options et grille restent une saisie
+manuelle, dans les mêmes écrans que pour une gamme existante. Agile ne connaît que les
+articles d'un produit (codes, désignations), jamais la notion de « composition »/« option »
+ni la correspondance combinaison → article — cette connaissance est strictement IMI,
+Agile ne peut pas la deviner (voir `docs/01-contexte-et-besoin.md`,
+`docs/02-architecture.md` § 4).
+
+Pour aider à construire la grille sans deviner les codes à l'aveugle, un champ de recherche
+dans la section « Grille » (`GET /api/admin/agile-articles`) interroge le **miroir local**
+déjà synchronisé (`Article`, alimenté par `POST /api/sync` — pas d'appel Snowflake direct
+à la recherche) par code, désignation, catégorie ou ligne produit. Cliquer un résultat
+pré-remplit le code article, la désignation et la référence commerciale du formulaire
+d'ajout de ligne de grille — les options embarquées restent à cocher à la main.
 
 ### Licences (mots/bits)
 
@@ -86,6 +110,10 @@ et la vérification du mot de passe au login (pas d'endpoint de connexion dédi�
 
 ## Prochaines étapes
 
-- Édition des mots de licence (HDR, CRT, SATCORE) — hors périmètre, structure de données
-  différente pour chacune (voir `docs/04-regles-du-classeur.md` § 4).
-- Création de gamme complète (aujourd'hui : uniquement via `tools/import_workbook.py`).
+- Édition des mots de licence CRT — hors périmètre, structure de données différente
+  (voir `docs/04-regles-du-classeur.md` § 4).
+- La recherche d'articles Agile (`GET /api/admin/agile-articles`) aide à repérer les
+  articles d'une nouvelle gamme mais ne construit pas la grille : reste à évaluer si un
+  rapprochement automatique via les nomenclatures (BOM, voir
+  `docs/07-verification-nomenclature-bom.md`) peut un jour proposer des lignes de grille à
+  valider, une fois les `component_item_number` fiabilisés avec l'IMI.

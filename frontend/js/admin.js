@@ -28,6 +28,14 @@ const el = {
   newRuleTarget: document.getElementById("new-rule-target"),
   bomCheckRun: document.getElementById("bom-check-run"),
   bomCheckResult: document.getElementById("bom-check-result"),
+  createFamilyPanel: document.getElementById("create-family-panel"),
+  familyCreateForm: document.getElementById("family-create-form"),
+  newFamilyCode: document.getElementById("new-family-code"),
+  newFamilyLabel: document.getElementById("new-family-label"),
+  newFamilyDescription: document.getElementById("new-family-description"),
+  createFamilyMessage: document.getElementById("create-family-message"),
+  agileArticleSearchInput: document.getElementById("agile-article-search-input"),
+  agileArticleSearchResults: document.getElementById("agile-article-search-results"),
 };
 
 function el_(tag, className, text) {
@@ -62,6 +70,8 @@ async function init() {
   el.articlesSearch?.addEventListener("input", filterArticles);
   el.rulesSearch?.addEventListener("input", filterRules);
   el.bomCheckRun?.addEventListener("click", onCheckBom);
+  el.familyCreateForm?.addEventListener("submit", onCreateFamily);
+  el.agileArticleSearchInput?.addEventListener("input", onAgileArticleSearchInput);
 }
 
 function filterArticles() {
@@ -93,6 +103,7 @@ async function onLogin(event) {
   try {
     const families = await adminApi.listFamilies();
     el.loginPanel.hidden = true;
+    if (el.createFamilyPanel) el.createFamilyPanel.hidden = false;
     renderFamilyPicker(families);
   } catch (error) {
     clearAdminAuth();
@@ -107,6 +118,7 @@ function renderFamilyPicker(families) {
   for (const family of families) {
     const button = el_("button", null, family.label);
     button.type = "button";
+    button.dataset.code = family.code;
     if (family.code === state.familyCode) button.classList.add("active");
     button.addEventListener("click", () => selectFamily(family.code, button));
     el.familyPicker.appendChild(button);
@@ -146,6 +158,31 @@ async function onSaveFamily(event) {
     })
   );
   await loadFamily();
+}
+
+async function onCreateFamily(event) {
+  event.preventDefault();
+  el.createFamilyMessage.innerHTML = "";
+  const payload = {
+    code: el.newFamilyCode.value.trim(),
+    label: el.newFamilyLabel.value.trim(),
+    description: el.newFamilyDescription.value || null,
+  };
+  try {
+    await adminApi.createFamily(payload);
+  } catch (error) {
+    el.createFamilyMessage.appendChild(el_("div", "message message-error",
+      error.messages ? error.messages.join(" ") : String(error)));
+    return;
+  }
+  event.target.reset();
+  const families = await adminApi.listFamilies();
+  renderFamilyPicker(families);
+  const button = Array.from(el.familyPicker.children).find((b) => b.dataset.code === payload.code);
+  if (button) button.click();
+  el.createFamilyMessage.appendChild(el_("div", "message message-success",
+    `Gamme « ${payload.code} » créée. Vous pouvez maintenant y ajouter des groupes ` +
+    "d'options, des options et des lignes de grille ci-dessous."));
 }
 
 // --- Licences ---
@@ -562,6 +599,51 @@ function wrapLabel(text, inputEl) {
 }
 
 // --- Grille (articles) ---
+let agileSearchTimeout = null;
+
+function onAgileArticleSearchInput() {
+  clearTimeout(agileSearchTimeout);
+  const q = el.agileArticleSearchInput.value.trim();
+  el.agileArticleSearchResults.innerHTML = "";
+  if (q.length < 2) return;
+  agileSearchTimeout = setTimeout(() => runAgileArticleSearch(q), 300);
+}
+
+async function runAgileArticleSearch(q) {
+  let results;
+  try {
+    results = await adminApi.searchAgileArticles(q);
+  } catch (error) {
+    el.agileArticleSearchResults.innerHTML = "";
+    el.agileArticleSearchResults.appendChild(el_("div", "message message-error",
+      error.messages ? error.messages.join(" ") : String(error)));
+    return;
+  }
+
+  el.agileArticleSearchResults.innerHTML = "";
+  if (results.length === 0) {
+    el.agileArticleSearchResults.appendChild(el_("div", "message",
+      "Aucun article trouvé dans le miroir local — vérifiez que la synchro Agile a bien tourné."));
+    return;
+  }
+  for (const article of results) {
+    const row = el_("button", "agile-article-result");
+    row.type = "button";
+    const label = article.description
+      ? `${article.item_number} — ${article.description}`
+      : article.item_number;
+    row.textContent = article.product_line ? `${label} (${article.product_line})` : label;
+    row.addEventListener("click", () => {
+      document.getElementById("new-article-item").value = article.item_number;
+      document.getElementById("new-article-designation").value = article.description || "";
+      document.getElementById("new-article-ref").value = article.commercial_ref || "";
+      el.agileArticleSearchResults.innerHTML = "";
+      el.agileArticleSearchInput.value = "";
+    });
+    el.agileArticleSearchResults.appendChild(row);
+  }
+}
+
 function renderArticles() {
   el.articlesBody.innerHTML = "";
   for (const article of state.family.articles) {

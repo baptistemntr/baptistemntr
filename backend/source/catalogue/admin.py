@@ -2,12 +2,17 @@
 
 Remplace, pour ce qui est couvert, le passage obligé par `tools/import_workbook.py` et le
 classeur Excel — c'est tout l'objet de cet écran (voir docs/02-architecture.md § 2).
-Toutes les gammes sont éditables (voir docs/06-admin-imi.md), avec deux limites :
+Toutes les gammes sont éditables (voir docs/06-admin-imi.md), avec une limite :
 
-- pas de création de nouvelle gamme ;
 - `Option.caption` et `OptionGroup.code` ne se fixent qu'à la création : ce sont les clés
   stables dont dépend la résolution (`resolver.signature_of`), les renommer casserait
   silencieusement la grille — voir `docs/04-regles-du-classeur.md` § 3.
+
+Créer une gamme (`POST /families`) ne crée qu'une coquille vide (code, libellé,
+description) : les groupes, options et la grille restent une saisie manuelle IMI, Agile ne
+connaissant que les articles, jamais la configuration qui les relie (docs/02-architecture.md
+§ 4). `GET /agile-articles` aide à repérer, dans le miroir local déjà synchronisé, les
+articles d'une gamme qui n'a pas encore de grille — pas un import automatique.
 
 Les mots/bits de licence (HDR, SATCORE) sont éditables ici aussi — même modèle en somme
 pondérée que le reste (`resolver.build_license`). CRT (FEP) ne l'est pas : sa licence est
@@ -25,18 +30,21 @@ import os
 import secrets
 
 from fastapi import APIRouter, Depends, Header, HTTPException
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from catalogue import bom_check, snowflake_client
 from catalogue.database import SessionLocal
 from catalogue.models import (
-    ArticleMapping, LicenseBit, LicenseWord, Option, OptionGroup, OptionRule, ProductFamily,
+    Article, ArticleMapping, LicenseBit, LicenseWord, Option, OptionGroup, OptionRule,
+    ProductFamily,
 )
 from catalogue.resolver import signature_of
 from catalogue.schemas import (
     AdminArticleCreate,
     AdminArticleOut,
     AdminArticleUpdate,
+    AdminFamilyCreate,
     AdminFamilyDetailOut,
     AdminFamilyUpdate,
     AdminGroupCreate,
@@ -53,6 +61,7 @@ from catalogue.schemas import (
     AdminOptionUpdate,
     AdminRuleCreate,
     AdminRuleOut,
+    AgileArticleOut,
     BomDiscrepancyOut,
     FamilyOut,
 )
@@ -206,6 +215,59 @@ def list_families() -> list[FamilyOut]:
     try:
         families = session.query(ProductFamily).order_by(ProductFamily.position).all()
         return [FamilyOut.model_validate(f, from_attributes=True) for f in families]
+    finally:
+        session.close()
+
+
+@router.post("/families", response_model=AdminFamilyDetailOut, status_code=201)
+def create_family(payload: AdminFamilyCreate) -> AdminFamilyDetailOut:
+    """Crée une coquille vide : code, libellé, description. Groupes, options et grille
+    restent une saisie manuelle ensuite, dans les mêmes écrans que pour une gamme existante
+    — voir le docstring du module.
+    """
+    session = _session()
+    try:
+        if session.get(ProductFamily, payload.code) is not None:
+            raise HTTPException(status_code=409, detail=f"La gamme « {payload.code} » existe déjà.")
+        max_position = session.query(func.max(ProductFamily.position)).scalar() or 0
+        family = ProductFamily(
+            code=payload.code,
+            label=payload.label,
+            description=payload.description,
+            has_license=payload.has_license,
+            position=max_position + 1,
+        )
+        session.add(family)
+        session.commit()
+    finally:
+        session.close()
+    return get_family(payload.code)
+
+
+@router.get("/agile-articles", response_model=list[AgileArticleOut])
+def search_agile_articles(q: str) -> list[AgileArticleOut]:
+    """Recherche dans le miroir local Agile déjà synchronisé (pas d'appel Snowflake ici,
+    contrairement à bom-check) — aide à repérer les articles d'une gamme qui n'a pas encore
+    de grille, ex. juste après avoir créé une gamme vide.
+    """
+    if len(q.strip()) < 2:
+        raise HTTPException(status_code=422, detail="Recherche trop courte (2 caractères minimum).")
+    session = _session()
+    try:
+        pattern = f"%{q.strip()}%"
+        articles = (
+            session.query(Article)
+            .filter(or_(
+                Article.item_number.ilike(pattern),
+                Article.description.ilike(pattern),
+                Article.category.ilike(pattern),
+                Article.product_line.ilike(pattern),
+            ))
+            .order_by(Article.item_number)
+            .limit(50)
+            .all()
+        )
+        return [AgileArticleOut.model_validate(a, from_attributes=True) for a in articles]
     finally:
         session.close()
 

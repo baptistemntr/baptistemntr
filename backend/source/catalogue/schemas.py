@@ -244,6 +244,27 @@ class AdminFamilyUpdate(BaseModel):
     description: str | None = None
 
 
+class AdminFamilyCreate(BaseModel):
+    """`code` se fixe à la création, comme `OptionGroup.code`/`Option.caption` — voir
+    docs/06-admin-imi.md."""
+
+    code: str
+    label: str
+    description: str | None = None
+    has_license: bool = False
+
+
+class AgileArticleOut(BaseModel):
+    """Un article du miroir local Agile (`Article`), pour aider à repérer les articles
+    d'une gamme pas encore présente dans la grille — voir GET /api/admin/agile-articles."""
+
+    item_number: str
+    description: str | None = None
+    commercial_ref: str | None = None
+    product_line: str | None = None
+    category: str | None = None
+
+
 # `constant_value` prime sur `option_ids` quand renseigné (bit figé, ex. SATCORE) ; sinon
 # le bit vaut VRAI si au moins une des options listées est retenue (OR) ; ni l'un ni
 # l'autre : `unmapped_reason` explique pourquoi le bit n'est pas calculable (ex. dépend

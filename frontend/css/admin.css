@@ -333,6 +333,59 @@
   border: 1px solid var(--border-subtle);
 }
 
+.agile-article-search {
+  margin-top: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  background: var(--bg-surface-2, #f8fafc);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.agile-article-search label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0;
+}
+
+.agile-article-search input {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 7px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+}
+
+#agile-article-search-results {
+  margin-top: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.agile-article-result {
+  text-align: left;
+  padding: 7px 10px;
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.agile-article-result:hover {
+  border-color: var(--safran-blue);
+  background: var(--bg-surface-hover, #eef6ff);
+}
+
 .admin-group {
   background: #f8fafc;
   border: 1px solid var(--border-subtle);
