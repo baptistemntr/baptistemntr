@@ -192,6 +192,37 @@ LIFECYCLE_COLUMNS_QUERY = """
     ORDER BY TABLE_NAME, COLUMN_NAME
 """
 
+# Teste si ITEM.IS_TLA (« Top Level Assembly ») isole les articles finis/vendables des
+# pièces brutes (vis, câbles...) qui composent la grande majorité de la classe 10000 —
+# hypothèse pour réduire le bruit d'une éventuelle extraction de préfixe de gamme depuis
+# DESCRIPTION (ex. « CRT-Q-EXT-4U » → CRT), déjà vérifiée peu fiable telle quelle (HDR,
+# SATCORE portent un nom commercial différent : « CORTEX », « SATEL.MODEM »). IS_TLA ne
+# réglera pas ce problème de nommage, seulement — si l'hypothèse se vérifie — le volume de
+# bruit à filtrer avant d'en tirer un préfixe.
+TLA_DISTRIBUTION_QUERY = """
+    SELECT IS_TLA, COUNT(*) AS N
+    FROM ITEM
+    WHERE CLASS = 10000
+    GROUP BY IS_TLA
+    ORDER BY N DESC
+"""
+
+TLA_KNOWN_ITEMS_QUERY = """
+    SELECT ITEM_NUMBER, DESCRIPTION, IS_TLA
+    FROM ITEM
+    WHERE ITEM_NUMBER IN ({item_numbers})
+"""
+
+TLA_SAMPLE_QUERY = """
+    SELECT ITEM_NUMBER, DESCRIPTION
+    FROM ITEM
+    WHERE CLASS = 10000
+      AND IS_TLA = 1
+      AND (DELETE_FLAG IS NULL OR DELETE_FLAG != 1)
+    ORDER BY RANDOM()
+    LIMIT 30
+"""
+
 # Sert à vérifier une hypothèse pour une future détection d'incohérences grille ↔ Agile
 # (docs/01-contexte-et-besoin.md) : Option.component_item_number (ex. S128865 pour l'option
 # C0 de CRT) doit apparaître dans la nomenclature réelle de l'article que la grille associe
@@ -269,6 +300,12 @@ def main() -> None:
              "composant — pour vérifier la correspondance avec Option.component_item_number "
              "(ex. S128354 doit contenir S128865, le composant de l'option C0 côté CRT).",
     )
+    parser.add_argument(
+        "--probe-tla", action="store_true",
+        help="Teste si ITEM.IS_TLA isole les articles finis des pièces brutes : "
+             "distribution des valeurs, IS_TLA des 6 articles de gamme connus, échantillon "
+             "de désignations parmi IS_TLA=1.",
+    )
     args = parser.parse_args()
 
     if not os.getenv("SNOWFLAKE_USER"):
@@ -295,6 +332,17 @@ def main() -> None:
         if args.bom_of:
             show(f"Nomenclature active (BOM) de {args.bom_of}",
                  fetch_all(conn, BOM_FOR_ITEM_QUERY, item_number=args.bom_of))
+            return
+        if args.probe_tla:
+            show("Distribution de IS_TLA (classe 10000)", fetch_all(conn, TLA_DISTRIBUTION_QUERY))
+            # Les 6 articles déjà utilisés pour tester l'extraction de préfixe de gamme
+            # (CRT, HDR, SATCORE, DTR, RSR-RF, WBR) — pour voir si IS_TLA les identifie tous
+            # comme finis, ou si le signal est incohérent même sur des cas connus.
+            known = "'S110647', 'S100683', 'S100681', 'S128362', 'S135963', 'S122464'"
+            show("IS_TLA des 6 articles de gamme connus",
+                 fetch_all(conn, TLA_KNOWN_ITEMS_QUERY.format(item_numbers=known)))
+            show("Échantillon aléatoire de 30 désignations parmi IS_TLA=1",
+                 fetch_all(conn, TLA_SAMPLE_QUERY))
             return
         if args.find_text:
             query, verb = (FIND_EXACT_QUERY, "égal à") if args.exact else (FIND_TEXT_QUERY, "contenant")
