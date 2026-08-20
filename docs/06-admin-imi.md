@@ -128,6 +128,15 @@ automatiquement — même philosophie que la vérification BOM (`docs/07-verific
 nomenclature-bom.md`) : une absence est à vérifier au cas par cas avec l'IMI avant toute
 correction de grille.
 
+**Confirmé par l'IMI : tous les articles de `S113472` sont en production ou en pré-série**
+— la présence dans la liste de vente suffit donc à garantir qu'un article n'est pas
+obsolète, sans avoir besoin d'aller chercher en plus un champ « Lifecycle Phase » côté
+Agile (piste explorée puis abandonnée pour cette raison — `tools/discover_agile.py
+--probe-lifecycle`, toujours sans colonne fiable identifiée de toute façon). Une absence de
+la liste reste, elle, à vérifier au cas par cas : elle indique probablement un retrait côté
+Agile, mais la comparaison ne prouve pas la raison (évolution, obsolescence, ou simple
+oubli de mise à jour de la liste).
+
 ### Licences (mots/bits)
 
 HDR et SATCORE stockent leur licence en base (`LicenseWord`/`LicenseBit`, la même somme
