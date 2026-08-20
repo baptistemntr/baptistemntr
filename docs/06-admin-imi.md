@@ -71,7 +71,15 @@ SATCORE portent un nom commercial Agile différent du code de gamme (`CORTEX`,
 `SATEL.MODEM`). La colonne `ITEM.IS_TLA` (« Top Level Assembly »), qui aurait pu isoler les
 articles finis des pièces brutes avant extraction, s'est révélée entièrement vide
 (`NULL` sur les 119 975 articles de la classe 10000) — aucun filtre disponible pour cette
-piste. Voir `tools/discover_agile.py --probe-tla` pour rejouer ce test.
+piste. Une dernière piste, `ITEM.CATEGORY` (résolu en `CATEGORY_LABEL`, déjà utilisé pour
+`Article.category`), a aussi été écartée : c'est une classification de fabrication
+(« SM00A = Assembly », « SC02C = Mechanical Part - Machining »...), pas une classification
+produit — les 6 articles de référence connus retombent tous sur la même valeur
+(`SM00A = Assembly`), sans aucune différenciation entre gammes. **Quatre pistes Agile
+indépendantes testées (product_line, préfixe DESCRIPTION, IS_TLA, CATEGORY), aucune ne
+porte la notion de gamme** : c'est une catégorisation propre au catalogue, absente d'Agile,
+qui reste donc de la connaissance métier à saisir manuellement à la création d'une gamme.
+Voir `tools/discover_agile.py --probe-tla` / `--probe-category` pour rejouer ces tests.
 
 ### Licences (mots/bits)
 
