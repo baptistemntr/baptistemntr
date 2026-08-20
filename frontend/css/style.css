@@ -526,6 +526,77 @@ body::before {
   box-shadow: 0 0 0 3px var(--safran-blue-glow);
 }
 
+/* Import d'une configuration exportée */
+.import-config-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--bg-surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  box-shadow: var(--shadow-card);
+  max-width: 900px;
+  margin: 0 auto var(--space-6);
+}
+
+.import-config-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--safran-blue);
+}
+
+.import-config-row {
+  display: flex;
+  gap: 8px;
+}
+
+.import-config-row input {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+}
+
+.import-config-row input:focus {
+  outline: none;
+  border-color: var(--safran-blue);
+  box-shadow: 0 0 0 3px var(--safran-blue-glow);
+}
+
+.import-config-row button {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0 18px;
+  border: 1px solid var(--safran-blue);
+  border-radius: var(--radius-md);
+  background: var(--safran-blue);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.export-config-code {
+  margin-top: var(--space-4);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.export-config-code code {
+  font-weight: 700;
+}
+
 /* Groupes & Sections d'Options */
 #groups {
   display: flex;

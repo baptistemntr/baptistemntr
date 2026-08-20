@@ -43,7 +43,7 @@ Responsabilités :
 | Référentiel de configuration | Gammes, groupes d'options, options, grille article, règles de compatibilité |
 | Résolution | Combinaison d'options → article Agile + désignation + référence commerciale |
 | Licences | Génération de la clé à partir des bits déclarés pour la gamme |
-| Export | Récapitulatif de configuration (PDF / fiche client) |
+| Export | Récapitulatif de configuration (PDF / fiche client), avec un code de reprise |
 
 ### `frontend/` — Interface (HTML/CSS/JS sans framework)
 
@@ -53,7 +53,13 @@ un dossier statique déployable tel quel derrière le proxy Safran.
 Deux espaces :
 
 - **Espace commercial** : sélection de la gamme, configuration guidée, récapitulatif
-  permanent en haut d'écran, infobulles sur chaque terme, export de la fiche client.
+  permanent en haut d'écran, infobulles sur chaque terme, export de la fiche client (PDF via
+  impression navigateur — sans donnée structurée embarquée, juste du texte imprimé). Reprise
+  fiable d'une fiche exportée : un code compact (`<gamme>:<ids d'options>`, ex.
+  `CRT:101,203,304`) est imprimé au bas de chaque fiche, à recopier dans le champ « Reprendre
+  une configuration exportée » pour recocher exactement les mêmes options — pas de lecture
+  automatique du PDF (nécessiterait une nouvelle dépendance Python d'extraction, écartée
+  pour rester sans installation supplémentaire sur les postes verrouillés).
 - **Espace IMI** (`/admin.html`) : administration des gammes, options, textes d'aide,
   grille de croix et règles de licence — l'équivalent des onglets « settings », mais sans
   formule cachée. V1 restreinte à une gamme pilote, licences hors périmètre — voir

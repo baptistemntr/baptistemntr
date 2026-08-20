@@ -56,6 +56,10 @@ const el = {
   exportConfigTable: document.getElementById("export-config-table"),
   exportLicenseBlock: document.getElementById("export-license-block"),
   exportLicense: document.getElementById("export-license"),
+  exportConfigCode: document.getElementById("export-config-code"),
+  importConfigInput: document.getElementById("import-config-input"),
+  importConfigButton: document.getElementById("import-config-button"),
+  importConfigMessage: document.getElementById("import-config-message"),
 };
 
 function el_(tag, className, text) {
@@ -102,6 +106,11 @@ async function init() {
 
   el.articlePickerSelect?.addEventListener("change", onArticlePicked);
 
+  el.importConfigButton?.addEventListener("click", onImportConfig);
+  el.importConfigInput?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") onImportConfig();
+  });
+
   setup3DVisualTilt();
 
   try {
@@ -143,6 +152,8 @@ function renderFamilyPicker() {
   for (const family of state.families) {
     const button = document.createElement("button");
     button.type = "button";
+
+    button.dataset.code = family.code;
 
     const title = el_("span", "family-card-title", family.label);
     button.appendChild(title);
@@ -212,12 +223,56 @@ async function loadArticlePicker(code) {
 function onArticlePicked() {
   const article = state.articlesById.get(el.articlePickerSelect.value);
   if (!article) return;
+  applyOptionIds(article.option_ids);
+}
 
+// Coche exactement les options données (les autres sont décochées) — partagé par la
+// recherche d'article existant et l'import d'une configuration exportée.
+function applyOptionIds(optionIds) {
+  const idSet = new Set(optionIds);
   for (const input of el.groups.querySelectorAll("input")) {
-    input.checked = article.option_ids.includes(Number(input.dataset.optionId));
+    input.checked = idSet.has(Number(input.dataset.optionId));
+  }
+  onSelectionChange();
+}
+
+async function onImportConfig() {
+  const raw = (el.importConfigInput.value || "").trim();
+  el.importConfigMessage.innerHTML = "";
+
+  const match = raw.match(/^([A-Z0-9-]+):([0-9]+(?:,[0-9]+)*)?$/i);
+  if (!match) {
+    el.importConfigMessage.appendChild(el_("div", "message message-error",
+      "Format non reconnu — copiez le code tel qu'affiché en bas de la fiche exportée " +
+      "(ex. CRT:101,203,304)."));
+    return;
   }
 
-  onSelectionChange();
+  const familyCode = match[1].toUpperCase();
+  const optionIds = match[2] ? match[2].split(",").map(Number) : [];
+
+  const family = state.families.find((f) => f.code === familyCode);
+  const button = el.familyPicker.querySelector(`[data-code="${CSS.escape(familyCode)}"]`);
+  if (!family || !button) {
+    el.importConfigMessage.appendChild(el_("div", "message message-error",
+      `Gamme « ${familyCode} » introuvable.`));
+    return;
+  }
+
+  await selectFamily(familyCode, button);
+
+  const knownIds = new Set(state.currentFamily.groups.flatMap((g) => g.options.map((o) => o.id)));
+  const validIds = optionIds.filter((id) => knownIds.has(id));
+  const missingCount = optionIds.length - validIds.length;
+  applyOptionIds(validIds);
+
+  el.importConfigMessage.appendChild(el_("div", "message message-success",
+    `Configuration « ${family.label} » reprise (${validIds.length} option(s)).` +
+    (missingCount > 0
+      ? ` ${missingCount} option(s) du code n'existe(nt) plus dans la grille actuelle et ` +
+        "ont été ignorée(s)."
+      : "")));
+  el.importConfigInput.value = "";
 }
 
 function updateProductVisual(code) {
@@ -491,6 +546,17 @@ function buildExportSheet(result) {
 
   buildExportConfigTable();
   buildExportLicense(result.license);
+
+  if (el.exportConfigCode) el.exportConfigCode.textContent = buildConfigCode();
+}
+
+// « <code gamme>:<ids d'options triés> » — imprimé sur la fiche pour permettre de reprendre
+// exactement la même configuration plus tard (voir onImportConfig). Le ":" évite toute
+// ambiguïté avec un code de gamme contenant un tiret (ex. RSR-RF).
+function buildConfigCode() {
+  if (!state.currentFamily) return "";
+  const ids = Array.from(state.selectedIds).sort((a, b) => a - b).join(",");
+  return `${state.currentFamily.code}:${ids}`;
 }
 
 function buildExportConfigTable() {

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Catalogue Industriel — Safran Data Systems</title>
-<link rel="stylesheet" href="css/style.css?v=15">
+<link rel="stylesheet" href="css/style.css?v=16">
 <link rel="stylesheet" href="css/hero.css?v=1">
 <noscript><style>#intro{display:none}</style></noscript>
 </head>
@@ -72,6 +72,18 @@
     </div>
     <nav id="family-picker" class="family-picker" aria-label="Choix de la gamme"></nav>
   </section>
+
+  <div class="import-config-box">
+    <label class="import-config-label" for="import-config-input">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Reprendre une configuration exportée (code trouvé au bas de la fiche PDF)
+    </label>
+    <div class="import-config-row">
+      <input type="text" id="import-config-input" placeholder="ex. CRT:101,203,304">
+      <button type="button" id="import-config-button">Importer</button>
+    </div>
+    <div id="import-config-message"></div>
+  </div>
 
   <div id="recap-empty" class="recap-placeholder">
     Sélectionnez une gamme ci-dessus pour lancer la configuration technique et commerciale.
@@ -218,6 +230,11 @@
       <div id="export-license"></div>
     </section>
 
+    <div class="export-config-code">
+      Code de configuration (pour reprendre cette fiche sur le configurateur) :
+      <code id="export-config-code"></code>
+    </div>
+
     <footer class="export-footer">
       Document officiel généré par le configurateur Safran Data Systems — Sous réserve de validation finale par l'équipe commerciale.
     </footer>
@@ -226,7 +243,7 @@
 </div><!-- /app-root -->
 
 <script src="js/api.js?v=2"></script>
-<script src="js/app.js?v=8"></script>
+<script src="js/app.js?v=9"></script>
 <script src="js/hero.js?v=1"></script>
 </body>
 </html>
