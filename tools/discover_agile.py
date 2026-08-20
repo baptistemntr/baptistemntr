@@ -69,6 +69,28 @@ SUBCLASS_COLUMN_SEARCH_QUERY = """
     ORDER BY TABLE_NAME, COLUMN_NAME
 """
 
+# ITEM.SUBCLASS trouvé (NUMBER) par --find-subclass-column : même schéma que CATEGORY, un
+# ENTRYID à résoudre via LISTENTRY plutôt qu'une valeur directement lisible.
+SUBCLASS_DISTRIBUTION_QUERY = """
+    SELECT le_sub.ENTRYVALUE AS SUBCLASS_LABEL, COUNT(*) AS N
+    FROM ITEM i
+    LEFT JOIN LISTENTRY le_sub
+           ON le_sub.ENTRYID = i.SUBCLASS AND le_sub.LANGID = 3
+    WHERE i.CLASS = 10000
+      AND (i.DELETE_FLAG IS NULL OR i.DELETE_FLAG != 1)
+    GROUP BY le_sub.ENTRYVALUE
+    ORDER BY N DESC
+    LIMIT 60
+"""
+
+SUBCLASS_KNOWN_ITEMS_QUERY = """
+    SELECT i.ITEM_NUMBER, i.DESCRIPTION, le_sub.ENTRYVALUE AS SUBCLASS_LABEL
+    FROM ITEM i
+    LEFT JOIN LISTENTRY le_sub
+           ON le_sub.ENTRYID = i.SUBCLASS AND le_sub.LANGID = 3
+    WHERE i.ITEM_NUMBER IN ({item_numbers})
+"""
+
 # REV porte ses propres champs personnalisés en colonnes génériques (TEXT01..15,
 # LIST01..25...), un système distinct d'AGILE_FLEX. La référence commerciale peut être
 # rangée là plutôt que dans AGILE_FLEX — à vérifier en lisant les TEXTxx d'une révision.
@@ -359,6 +381,12 @@ def main() -> None:
              "Agile (ex. « Finished Good ») — première étape avant de tester si elle "
              "isole mieux les articles finis qu'IS_TLA (entièrement vide).",
     )
+    parser.add_argument(
+        "--probe-subclass", action="store_true",
+        help="Teste si ITEM.SUBCLASS (résolu via LISTENTRY, trouvé par "
+             "--find-subclass-column) isole les articles finis/vendables : distribution "
+             "des libellés, SUBCLASS des 6 articles de gamme connus.",
+    )
     args = parser.parse_args()
 
     if not os.getenv("SNOWFLAKE_USER"):
@@ -407,6 +435,13 @@ def main() -> None:
         if args.find_subclass_column:
             show("Colonnes évoquant Subclass / Finished Good",
                  fetch_all(conn, SUBCLASS_COLUMN_SEARCH_QUERY))
+            return
+        if args.probe_subclass:
+            show("Distribution de SUBCLASS_LABEL (classe 10000)",
+                 fetch_all(conn, SUBCLASS_DISTRIBUTION_QUERY))
+            known = "'S110647', 'S100683', 'S100681', 'S128362', 'S135963', 'S122464'"
+            show("SUBCLASS_LABEL des 6 articles de gamme connus",
+                 fetch_all(conn, SUBCLASS_KNOWN_ITEMS_QUERY.format(item_numbers=known)))
             return
         if args.find_text:
             query, verb = (FIND_EXACT_QUERY, "égal à") if args.exact else (FIND_TEXT_QUERY, "contenant")
