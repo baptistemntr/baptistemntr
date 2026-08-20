@@ -48,6 +48,8 @@ const adminApi = {
     adminRequest("/api/admin/families", {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
     }),
+  deleteFamily: (code) =>
+    adminRequest(`/api/admin/families/${encodeURIComponent(code)}`, { method: "DELETE" }),
   searchAgileArticles: (q) =>
     adminRequest(`/api/admin/agile-articles?q=${encodeURIComponent(q)}`),
 

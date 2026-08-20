@@ -15,6 +15,7 @@ const el = {
   familyForm: document.getElementById("family-form"),
   familyLabel: document.getElementById("family-label"),
   familyDescription: document.getElementById("family-description"),
+  deleteFamilyBtn: document.getElementById("delete-family-btn"),
   groupsList: document.getElementById("groups-list"),
   groupCreateForm: document.getElementById("group-create-form"),
   articlesBody: document.getElementById("articles-body"),
@@ -71,6 +72,7 @@ async function init() {
   el.rulesSearch?.addEventListener("input", filterRules);
   el.bomCheckRun?.addEventListener("click", onCheckBom);
   el.familyCreateForm?.addEventListener("submit", onCreateFamily);
+  el.deleteFamilyBtn?.addEventListener("click", onDeleteFamily);
   el.agileArticleSearchInput?.addEventListener("input", onAgileArticleSearchInput);
 }
 
@@ -158,6 +160,21 @@ async function onSaveFamily(event) {
     })
   );
   await loadFamily();
+}
+
+async function onDeleteFamily() {
+  const confirmed = confirm(
+    `Supprimer définitivement la gamme « ${state.family.label} » (${state.familyCode}) ?\n\n` +
+    "Ça supprime aussi tous ses groupes, options, la grille, les règles et les mots de " +
+    "licence. Irréversible."
+  );
+  if (!confirmed) return;
+  await runOrAlert(() => adminApi.deleteFamily(state.familyCode));
+  state.familyCode = null;
+  state.family = null;
+  el.content.hidden = true;
+  const families = await adminApi.listFamilies();
+  renderFamilyPicker(families);
 }
 
 async function onCreateFamily(event) {

@@ -332,6 +332,29 @@ def update_family(code: str, payload: AdminFamilyUpdate) -> AdminFamilyDetailOut
     return get_family(code)
 
 
+@router.delete("/families/{code}", status_code=204)
+def delete_family(code: str) -> None:
+    """Supprime une gamme et tout ce qui lui appartient — irréversible, à confirmer côté
+    écran avant l'appel. `ProductFamily.groups` cascade déjà vers `OptionGroup.options` (voir
+    models.py), mais règles, grille et mots de licence sont liés par `family_code` sans
+    relation ORM depuis `ProductFamily` : il faut les effacer nous-mêmes, et avant les
+    options qu'ils référencent, sous peine de laisser une clé étrangère orpheline.
+    """
+    session = _session()
+    try:
+        family = _get_family(session, code)
+        session.query(OptionRule).filter(OptionRule.family_code == code).delete(synchronize_session=False)
+        for mapping in session.query(ArticleMapping).filter(ArticleMapping.family_code == code).all():
+            session.delete(mapping)
+        for word in session.query(LicenseWord).filter(LicenseWord.family_code == code).all():
+            session.delete(word)
+        session.flush()
+        session.delete(family)
+        session.commit()
+    finally:
+        session.close()
+
+
 @router.post("/groups", response_model=AdminGroupOut)
 def create_group(payload: AdminGroupCreate) -> AdminGroupOut:
     session = _session()
