@@ -15,7 +15,8 @@ validé sur DTR (3 articles, pas de licence — un risque faible en cas d'erreur
 d'ouvrir le sélecteur de gamme à toutes les autres : casser la grille de DTR se corrige en
 minutes, casser celle de HDR (141 articles, licences) en pleine période commerciale
 beaucoup moins vite. Le sélecteur de gamme (`frontend/js/admin.js`, `renderFamilyPicker`)
-liste désormais les 19 gammes, dans le même ordre que l'espace commercial.
+liste désormais les 19 gammes, dans le même ordre que l'espace commercial — le même champ
+`ProductFamily.position` pilote les deux écrans (voir § « Réorganiser l'ordre des gammes »).
 
 ## Ce qui est éditable, et ce qui ne l'est pas
 
@@ -27,6 +28,7 @@ liste désormais les 19 gammes, dans le même ordre que l'espace commercial.
 | Options (libellé, définition technique) | Modification d'une règle existante (recréer) |
 | Grille (créer/modifier/supprimer une ligne) | Licence CRT (codée en dur, voir plus bas) |
 | Règles de compatibilité (créer/supprimer) | |
+| Ordre d'affichage des gammes (glisser-déposer) | |
 | Mots/bits de licence HDR et SATCORE | |
 
 Deux champs sont volontairement figés après création : `OptionGroup.code` et
@@ -84,6 +86,19 @@ Cliquer un résultat pré-remplit le code technique avec le premier segment de l
 jamais appliquée sans relecture** : fiable sur la plupart des gammes, pas sur celles au nom
 commercial Agile différent du code (HDR → `CORTEX`, SATCORE → `SATEL.MODEM`) — l'IMI reste
 toujours libre de corriger avant de valider le formulaire.
+
+### Réorganiser l'ordre des gammes
+
+Les encadrés du sélecteur de gamme se réorganisent par glisser-déposer directement dans
+l'écran (`renderFamilyPicker`, `PUT /api/admin/families/reorder`) — déposer un encadré avant
+un autre l'y insère, met à jour `ProductFamily.position` pour toutes les gammes en une fois,
+et persiste immédiatement (pas de bouton « Enregistrer » séparé). **Ce même champ pilote
+aussi le sélecteur de l'espace commercial** (`index.html`, `GET /api/families`) : changer
+l'ordre ici le change pour tout le monde, pas seulement pour l'écran IMI.
+
+Le point de dépose se comprend comme « juste avant l'encadré ciblé » — glisser au-delà du
+dernier encadré nécessite de le déposer sur l'avant-dernier puis de réajuster, il n'y a pas
+de zone de dépose dédiée en toute fin de liste.
 
 ### Licences (mots/bits)
 

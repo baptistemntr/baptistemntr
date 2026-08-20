@@ -244,6 +244,13 @@ class AdminFamilyUpdate(BaseModel):
     description: str | None = None
 
 
+class AdminFamilyReorder(BaseModel):
+    """Ordre d'affichage souhaité pour le sélecteur de gamme — doit contenir exactement les
+    codes des gammes existantes, dans l'ordre voulu (voir ProductFamily.position)."""
+
+    codes: list[str]
+
+
 class AdminFamilyCreate(BaseModel):
     """`code` se fixe à la création, comme `OptionGroup.code`/`Option.caption` — voir
     docs/06-admin-imi.md."""

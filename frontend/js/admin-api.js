@@ -44,6 +44,10 @@ const adminApi = {
       method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
     }),
   checkBom: (code) => adminRequest(`/api/admin/families/${encodeURIComponent(code)}/bom-check`),
+  reorderFamilies: (codes) =>
+    adminRequest("/api/admin/families/reorder", {
+      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ codes }),
+    }),
   createFamily: (payload) =>
     adminRequest("/api/admin/families", {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),

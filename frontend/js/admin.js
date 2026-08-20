@@ -124,10 +124,36 @@ function renderFamilyPicker(families) {
     const button = el_("button", null, family.label);
     button.type = "button";
     button.dataset.code = family.code;
+    button.draggable = true;
+    button.title = "Glisser pour réorganiser l'ordre d'affichage des gammes";
     if (family.code === state.familyCode) button.classList.add("active");
     button.addEventListener("click", () => selectFamily(family.code, button));
+    button.addEventListener("dragstart", (event) => {
+      event.dataTransfer.setData("text/plain", family.code);
+      event.dataTransfer.effectAllowed = "move";
+      button.classList.add("dragging");
+    });
+    button.addEventListener("dragend", () => button.classList.remove("dragging"));
+    button.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+    });
+    button.addEventListener("drop", (event) => {
+      event.preventDefault();
+      const draggedCode = event.dataTransfer.getData("text/plain");
+      if (!draggedCode || draggedCode === family.code) return;
+      const draggedBtn = el.familyPicker.querySelector(`[data-code="${CSS.escape(draggedCode)}"]`);
+      if (!draggedBtn) return;
+      el.familyPicker.insertBefore(draggedBtn, button);
+      onReorderFamilies();
+    });
     el.familyPicker.appendChild(button);
   }
+}
+
+async function onReorderFamilies() {
+  const codes = Array.from(el.familyPicker.children, (button) => button.dataset.code);
+  await runOrAlert(() => adminApi.reorderFamilies(codes));
 }
 
 async function selectFamily(code, button) {

@@ -5,6 +5,9 @@
 
 #admin-family-picker[hidden] { display: none; }
 
+#admin-family-picker button { cursor: grab; }
+#admin-family-picker button.dragging { opacity: 0.4; }
+
 .admin-header {
   display: flex;
   align-items: center;

@@ -46,6 +46,7 @@ from catalogue.schemas import (
     AdminArticleUpdate,
     AdminFamilyCreate,
     AdminFamilyDetailOut,
+    AdminFamilyReorder,
     AdminFamilyUpdate,
     AdminGroupCreate,
     AdminGroupOut,
@@ -242,6 +243,31 @@ def create_family(payload: AdminFamilyCreate) -> AdminFamilyDetailOut:
     finally:
         session.close()
     return get_family(payload.code)
+
+
+@router.put("/families/reorder", status_code=204)
+def reorder_families(payload: AdminFamilyReorder) -> None:
+    """Ordre d'affichage du sélecteur de gamme, fixé par glisser-déposer côté écran — même
+    `ProductFamily.position` déjà utilisé pour trier `list_families` et positionner une
+    gamme nouvellement créée en dernier. Doit être déclarée avant `/families/{code}`
+    (routage FastAPI par ordre d'enregistrement) sous peine que "reorder" soit interprété
+    comme un code de gamme.
+    """
+    session = _session()
+    try:
+        existing = {code for (code,) in session.query(ProductFamily.code).all()}
+        if set(payload.codes) != existing:
+            raise HTTPException(
+                status_code=422,
+                detail="La liste doit contenir exactement les codes des gammes existantes.",
+            )
+        for position, code in enumerate(payload.codes):
+            session.query(ProductFamily).filter(ProductFamily.code == code).update(
+                {"position": position}
+            )
+        session.commit()
+    finally:
+        session.close()
 
 
 @router.get("/agile-articles", response_model=list[AgileArticleOut])
