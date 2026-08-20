@@ -158,6 +158,15 @@ CHANGE_LOOKUP_QUERY = """
     WHERE i.ITEM_NUMBER = '{item_number}'
 """
 
+# --probe-lifecycle a montré que STATUSTYPE_LABEL est en réalité un type de pièce jointe de
+# l'ECO (« drw », « bmp », « jfif »), pas le cycle de vie — faux positif écarté. Mais
+# CHANGE.STATUS (constant sur les 4 lignes de S138833, valeur 2471878) n'a jamais été
+# testé comme ENTRYID LISTENTRY lui-même — reprend le même schéma toute-langue que
+# RELEASE_TYPE_RAW_QUERY plutôt que de présumer LANGID=3.
+CHANGE_STATUS_RAW_QUERY = """
+    SELECT * FROM LISTENTRY WHERE ENTRYID = {status_entry_id}
+"""
+
 # af.ID seul n'est pas une clé fiable : sans le filtre de classe, la jointure ramène des
 # attributs d'objets sans rapport (BOM, étiquettes...) dont l'ID numérique coïncide avec
 # celui de l'article. Vérifié en conditions réelles sur S110647.
@@ -458,8 +467,13 @@ def main() -> None:
         if args.probe_lifecycle:
             show("LISTENTRY pour ENTRYID 2472980/2472981 (toute langue)",
                  fetch_all(conn, RELEASE_TYPE_RAW_QUERY))
+            change_rows = fetch_all(conn, CHANGE_LOOKUP_QUERY, item_number=args.probe_lifecycle)
             show(f"CHANGE lié à {args.probe_lifecycle} via LATEST_RELEASED_ECO/DEFAULT_CHANGE",
-                 fetch_all(conn, CHANGE_LOOKUP_QUERY, item_number=args.probe_lifecycle))
+                 change_rows)
+            status_ids = sorted({row["STATUS"] for row in change_rows if row["STATUS"] is not None})
+            for status_id in status_ids:
+                show(f"LISTENTRY pour CHANGE.STATUS={status_id} (toute langue)",
+                     fetch_all(conn, CHANGE_STATUS_RAW_QUERY.format(status_entry_id=int(status_id))))
             return
         if args.bom_of:
             show(f"Nomenclature active (BOM) de {args.bom_of}",
