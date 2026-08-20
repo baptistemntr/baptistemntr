@@ -12,9 +12,18 @@ grille n'a capturé qu'un seul exemple). Le résultat est un rapport à relire p
 un verdict automatique — voir `docs/01-contexte-et-besoin.md`.
 """
 
+import re
+
 from catalogue.database import SessionLocal
 from catalogue.models import ArticleMapping
 from catalogue.snowflake_client import connect, fetch_all
+
+# Une partie des component_item_number recopiés du classeur ne sont pas de vrais codes
+# Agile mais du texte libre (« S120657+cables+meca », « 3 * S119519 ») : vérifié sur un
+# premier passage réel (gamme CRT), ce texte ne matche jamais aucune nomenclature et noie
+# les vrais écarts sous du bruit systématique. Un code Agile ne contient ni espace, ni « + »,
+# ni « * » — heuristique volontairement simple plutôt qu'une liste de formats à maintenir.
+_JUNK_COMPONENT_RE = re.compile(r"[\s+*]")
 
 # Même jointure que tools/discover_agile.py --bom-of, validée empiriquement sur S128354 :
 # BOM.ITEM (numérique) est le parent, résolu via ITEM.ID — pas BOM.ITEM_NUMBER, qui
@@ -46,10 +55,13 @@ def check_family(family_code: str) -> list[dict]:
             .filter(ArticleMapping.family_code == family_code, ArticleMapping.item_number.isnot(None))
             .all()
         )
-        # Seules les options qui portent un composant Agile connu peuvent être vérifiées ;
-        # le reste (la majorité aujourd'hui, component_item_number non renseigné) est hors
-        # périmètre, jamais signalé comme une anomalie.
-        checkable = [(m, o) for m in mappings for o in m.options if o.component_item_number]
+        # Seules les options qui portent un composant Agile connu et propre peuvent être
+        # vérifiées ; le reste (non renseigné, ou texte libre non-vérifiable — voir
+        # _JUNK_COMPONENT_RE) est hors périmètre, jamais signalé comme une anomalie.
+        checkable = [
+            (m, o) for m in mappings for o in m.options
+            if o.component_item_number and not _JUNK_COMPONENT_RE.search(o.component_item_number)
+        ]
         if not checkable:
             return []
         item_numbers = sorted({m.item_number for m, _ in checkable})
