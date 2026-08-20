@@ -59,6 +59,20 @@ déjà synchronisé (`Article`, alimenté par `POST /api/sync` — pas d'appel S
 pré-remplit le code article, la désignation et la référence commerciale du formulaire
 d'ajout de ligne de grille — les options embarquées restent à cocher à la main.
 
+Un second menu (« Créer une nouvelle gamme », `GET /api/admin/agile-product-lines`) liste
+les lignes produit Agile distinctes du miroir local, triées par nombre d'articles — pour
+parcourir ce qui existe côté Agile avant de nommer une gamme. **Ce n'est pas une liste de
+gammes prêtes à créer** : Agile n'a aucune notion de « gamme » comparable à CRT/HDR/SATCORE,
+seulement des lignes produit internes (ex. `550 = ARC S&C`) qui ne recoupent pas cette
+granularité. Une piste alternative (extraire un préfixe de gamme depuis
+`ITEM.DESCRIPTION`, ex. `CRT-Q-EXT-4U` → `CRT`) a été testée et écartée : sur 6 articles de
+référence connus, seuls 4 avaient un préfixe exploitable (CRT, DTR, RSR-RF, WBR) — HDR et
+SATCORE portent un nom commercial Agile différent du code de gamme (`CORTEX`,
+`SATEL.MODEM`). La colonne `ITEM.IS_TLA` (« Top Level Assembly »), qui aurait pu isoler les
+articles finis des pièces brutes avant extraction, s'est révélée entièrement vide
+(`NULL` sur les 119 975 articles de la classe 10000) — aucun filtre disponible pour cette
+piste. Voir `tools/discover_agile.py --probe-tla` pour rejouer ce test.
+
 ### Licences (mots/bits)
 
 HDR et SATCORE stockent leur licence en base (`LicenseWord`/`LicenseBit`, la même somme
