@@ -91,6 +91,21 @@ SUBCLASS_KNOWN_ITEMS_QUERY = """
     WHERE i.ITEM_NUMBER IN ({item_numbers})
 """
 
+# --probe-subclass a renvoyé SUBCLASS_LABEL=None partout via LANGID=3 — ambigu : soit
+# ITEM.SUBCLASS est réellement vide, soit la jointure échoue comme pour RELEASE_TYPE
+# (résolu en cherchant l'ENTRYID dans LISTENTRY toute langue confondue). Ici on regarde la
+# valeur brute (sans jointure) pour trancher, plus l'article S138833 de la copie d'écran
+# Agile (« Subclass : Finished Good ») qui n'est pas dans les 6 connus.
+SUBCLASS_RAW_QUERY = """
+    SELECT ITEM_NUMBER, DESCRIPTION, SUBCLASS
+    FROM ITEM
+    WHERE ITEM_NUMBER IN ({item_numbers})
+"""
+
+LISTENTRY_ANY_LANG_QUERY = """
+    SELECT ENTRYID, LANGID, ENTRYVALUE FROM LISTENTRY WHERE ENTRYID IN ({entry_ids})
+"""
+
 # REV porte ses propres champs personnalisés en colonnes génériques (TEXT01..15,
 # LIST01..25...), un système distinct d'AGILE_FLEX. La référence commerciale peut être
 # rangée là plutôt que dans AGILE_FLEX — à vérifier en lisant les TEXTxx d'une révision.
@@ -387,6 +402,12 @@ def main() -> None:
              "--find-subclass-column) isole les articles finis/vendables : distribution "
              "des libellés, SUBCLASS des 6 articles de gamme connus.",
     )
+    parser.add_argument(
+        "--probe-subclass-raw",
+        help="Si --probe-subclass renvoie SUBCLASS_LABEL=None partout : vérifie la valeur "
+             "brute ITEM.SUBCLASS (sans jointure LANGID=3) pour cet article, puis cherche "
+             "son ENTRYID dans LISTENTRY toute langue confondue.",
+    )
     args = parser.parse_args()
 
     if not os.getenv("SNOWFLAKE_USER"):
@@ -442,6 +463,19 @@ def main() -> None:
             known = "'S110647', 'S100683', 'S100681', 'S128362', 'S135963', 'S122464'"
             show("SUBCLASS_LABEL des 6 articles de gamme connus",
                  fetch_all(conn, SUBCLASS_KNOWN_ITEMS_QUERY.format(item_numbers=known)))
+            return
+        if args.probe_subclass_raw:
+            item_numbers = "'S110647', 'S100683', 'S100681', 'S128362', 'S135963', " \
+                            f"'S122464', '{args.probe_subclass_raw}'"
+            raw_rows = fetch_all(conn, SUBCLASS_RAW_QUERY.format(item_numbers=item_numbers))
+            show("ITEM.SUBCLASS brut (sans jointure)", raw_rows)
+            entry_ids = sorted({str(row["SUBCLASS"]) for row in raw_rows if row["SUBCLASS"] is not None})
+            if entry_ids:
+                show("LISTENTRY pour ces ENTRYID, toute langue",
+                     fetch_all(conn, LISTENTRY_ANY_LANG_QUERY.format(entry_ids=", ".join(entry_ids))))
+            else:
+                print("\n=== LISTENTRY pour ces ENTRYID, toute langue ===")
+                print("(ITEM.SUBCLASS est NULL pour tous ces articles — pas un problème de jointure)")
             return
         if args.find_text:
             query, verb = (FIND_EXACT_QUERY, "égal à") if args.exact else (FIND_TEXT_QUERY, "contenant")
