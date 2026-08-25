@@ -102,6 +102,22 @@ cd frontend && python3 -m http.server 5500
 Ouvrir http://localhost:5500 (le backend doit tourner sur le port 8010). Détails dans
 `frontend/README.md`.
 
+## Conteneur (Docker)
+
+Une seule image (`Dockerfile`) suffit : le serveur sert aussi le site statique, un seul
+port à exposer. Secrets et données ne sont jamais copiés dans l'image (`.dockerignore`) —
+à monter au lancement.
+
+```bash
+cp backend/.env.example backend/.env   # à compléter
+# déposer la clé Snowflake dans backend/secrets/rsa_GS4_key.p8
+docker compose up --build
+```
+
+Ouvrir http://localhost:8010. La base SQLite persiste dans le volume `catalogue_data`
+d'un lancement à l'autre. Pour PostgreSQL en production, remplacer `DATABASE_URL` dans
+`docker-compose.yml` par l'adresse réelle et retirer ce volume.
+
 ## État d'avancement
 
 - [x] Cadrage fonctionnel documenté

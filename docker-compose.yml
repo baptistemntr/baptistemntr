@@ -1,0 +1,27 @@
+# Lancement : docker compose up --build
+#
+# Avant le premier lancement :
+#   1. cp backend/.env.example backend/.env, puis le compléter (identifiants Snowflake,
+#      ADMIN_PASSWORD).
+#   2. Déposer la clé privée Snowflake dans backend/secrets/rsa_GS4_key.p8.
+#
+# La base SQLite persiste dans le volume `catalogue_data` d'un lancement à l'autre — sans
+# ça, chaque redémarrage repartirait d'une base vide (voir docs/02-architecture.md).
+# Pour PostgreSQL en production, remplacer DATABASE_URL ci-dessous par l'adresse réelle et
+# retirer le volume `catalogue_data`.
+
+services:
+  catalogue:
+    build: .
+    ports:
+      - "8010:8010"
+    environment:
+      DATABASE_URL: sqlite:////data/catalogue.db
+    env_file:
+      - backend/.env
+    volumes:
+      - catalogue_data:/data
+      - ./backend/secrets:/app/backend/secrets:ro
+
+volumes:
+  catalogue_data:

@@ -1,0 +1,8 @@
+# Jamais dans l'image : secrets, base locale, données sources, historique git.
+backend/.env
+backend/secrets/
+backend/catalogue.db
+data/
+.git/
+**/__pycache__/
+**/*.pyc
