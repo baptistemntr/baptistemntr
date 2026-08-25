@@ -118,6 +118,15 @@ Ouvrir http://localhost:8010. La base SQLite persiste dans le volume `catalogue_
 d'un lancement à l'autre. Pour PostgreSQL en production, remplacer `DATABASE_URL` dans
 `docker-compose.yml` par l'adresse réelle et retirer ce volume.
 
+### Ouvrir le projet dans un Dev Container (VS Code)
+
+Alternative à l'installation manuelle des dépendances : `.devcontainer/devcontainer.json`
+réutilise le `Dockerfile` pour ouvrir le projet dans VS Code avec Python et toutes les
+librairies déjà installées, code source monté en direct (les modifications s'appliquent
+sans reconstruire l'image). Nécessite Docker Desktop et l'extension VS Code
+« Dev Containers » (`ms-vscode-remote.remote-containers`), puis palette de commandes
+(`Ctrl+Maj+P`) → *Dev Containers: Reopen in Container*.
+
 ## État d'avancement
 
 - [x] Cadrage fonctionnel documenté
